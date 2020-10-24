@@ -144,8 +144,8 @@ Function DeclareKeyCode(String variable, String nameForConflicts, Bool registerF
 		return
 	EndIf
 	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_KEY)
-	DeclarativeMCM_PushExtraInt(index, registerForKey as Int)
 	DeclarativeMCM_PushExtraInt(index, default)
+	DeclarativeMCM_PushExtraInt(index, registerForKey as Int)
 	DeclarativeMCM_PushExtraString(index, nameForConflicts)
 	If !StorageUtil.HasIntValue(None, variable)
 		If default && registerForKey
@@ -814,13 +814,13 @@ Event OnOptionDefault(Int oid)
 		EndIf
 		SetColorOptionValue(oid, default)
 	ElseIf oidType == OID_TYPE_KEYMAP
-		Int default = DeclarativeMCM_GetExtraInt(index, 1)
+		Int default = DeclarativeMCM_GetExtraInt(index, 0)
 		StorageUtil.SetIntValue(None, variable, default)
 		If !Validate(variable)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
 			return
 		EndIf
-		Bool registerForKey = DeclarativeMCM_GetExtraInt(index, 0)
+		Bool registerForKey = DeclarativeMCM_GetExtraInt(index, 1)
 		If registerForKey
 			If iOldValue
 				UnregisterForKey(iOldValue)
