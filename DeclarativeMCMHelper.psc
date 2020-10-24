@@ -344,6 +344,36 @@ Int Function MakeKeyMap(String variable, String label, String extraInfo, Int fla
 	return oid
 EndFunction
 
+; Create a text option that will save all declared variables to an external
+; file using JsonUtil. path is the path to the JSON file where we should save
+; data. label is the text shown inline, buttonText is the value of the text
+; option, extraInfo is shown on hover. successMessage and failureMessage are
+; displayed with ShowMessage() on success or failure, unless you pass an
+; empty string, in which case no message is displayed.
+Int Function MakeSaveButton(String path, String label, String buttonText, String extraInfo, String successMessage, String failureMessage, Int flags = 0)
+	Int oid = AddTextOption(label, buttonText, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE, extraInfo, flags)
+	DeclarativeMCM_PushExtraString(oidIndex, path, true)
+	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
+	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
+	return oid
+EndFunction
+
+; Create a text option that will load all declared variables from an external
+; file using JsonUtil. path is the path to the JSON file where we should load
+; data. label is the text shown inline, buttonText is the value of the text
+; option, extraInfo is shown on hover. successMessage and failureMessage are
+; displayed with ShowMessage() on success or failure, unless you pass an
+; empty string, in which case no message is displayed.
+Int Function MakeLoadButton(String path, String label, String buttonText, String extraInfo, String successMessage, String failureMessage, Int flags = 0)
+	Int oid = AddTextOption(label, buttonText, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_LOAD, extraInfo, flags)
+	DeclarativeMCM_PushExtraString(oidIndex, path, true)
+	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
+	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
+	return oid
+EndFunction
+
 ; MCM overrides:
 ; WARNING: If you are going to override any of these functions, you should call
 ; Parent.Function() (e.g. Parent.OnConfigInit(), Parent.OnVersionUpdate(), etc.)
@@ -455,7 +485,10 @@ Event OnOptionSelect(Int oid)
 	EndIf
 	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
-	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	String variable
+	If index != -1
+		variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	EndIf
 	If oidType == OID_TYPE_CHECKBOX
 		Bool value = StorageUtil.GetIntValue(None, variable)
 		value = !value
@@ -478,6 +511,44 @@ Event OnOptionSelect(Int oid)
 			return
 		EndIf
 		SetTextOptionValue(oid, DeclarativeMCM_GetExtraString(oidIndex, value, true))
+	ElseIf oidType == OID_TYPE_SAVE
+		String path = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
+		Int i = 0
+		Int count = StorageUtil.IntListCount(self, DeclarativeMCM_VariableList)
+		While i < count
+			DeclarativeMCM_SaveVariable(path, i)
+			i += 1
+		EndWhile
+		If JsonUtil.Save(path)
+			String successMessage = DeclarativeMCM_GetExtraString(oidIndex, 1, true)
+			If successMessage
+				ShowMessage(successMessage, false)
+			EndIf
+		Else
+			String failureMessage = DeclarativeMCM_GetExtraString(oidIndex, 2, true)
+			If failureMessage
+				ShowMessage(failureMessage, false)
+			EndIf
+		EndIf
+	ElseIf oidType == OID_TYPE_LOAD
+		String path = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
+		If !JsonUtil.Load(path) || !JsonUtil.IsGood(path)
+			String failureMessage = DeclarativeMCM_GetExtraString(oidIndex, 2, true)
+			If failureMessage
+				ShowMessage(failureMessage, false)
+			EndIf
+			return
+		EndIf
+		Int i = 0
+		Int count = StorageUtil.IntListCount(self, DeclarativeMCM_VariableList)
+		While i < count
+			DeclarativeMCM_LoadVariable(path, i)
+			i += 1
+		EndWhile
+		String successMessage = DeclarativeMCM_GetExtraString(oidIndex, 1, true)
+		If successMessage
+			ShowMessage(successMessage, false)
+		EndIf
 	EndIf
 EndEvent
 
@@ -677,9 +748,12 @@ Event OnOptionDefault(Int oid)
 	If oidIndex == -1
 		return
 	EndIf
+	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_SAVE || oidType == OID_TYPE_LOAD
+		return
+	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
 	Int iOldValue = StorageUtil.GetIntValue(None, variable)
 	Float fOldValue = StorageUtil.GetFloatValue(None, variable)
 	String sOldValue = StorageUtil.GetStringValue(None, variable)
@@ -739,13 +813,13 @@ Event OnOptionDefault(Int oid)
 		EndIf
 		SetColorOptionValue(oid, default)
 	ElseIf oidType == OID_TYPE_KEYMAP
+		Int default = DeclarativeMCM_GetExtraInt(index, 1)
 		StorageUtil.SetIntValue(None, variable, default)
 		If !Validate(variable)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
 			return
 		EndIf
 		Bool registerForKey = DeclarativeMCM_GetExtraInt(index, 0)
-		Int default = DeclarativeMCM_GetExtraInt(index, 1)
 		If registerForKey
 			If iOldValue
 				UnregisterForKey(iOldValue)
@@ -775,6 +849,8 @@ Int Property OID_TYPE_DROPDOWN = 5 autoreadonly
 Int Property OID_TYPE_CYCLER = 6 autoreadonly
 Int Property OID_TYPE_COLOR = 7 autoreadonly
 Int Property OID_TYPE_KEYMAP = 8 autoreadonly
+Int Property OID_TYPE_SAVE = 9 autoreadonly
+Int Property OID_TYPE_LOAD = 10 autoreadonly
 
 ; Lists populated by DeclareFoo(). Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.
@@ -809,6 +885,40 @@ Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_TypeList, typecode)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_OffsetList, -1)
 	return result
+EndFunction
+
+Function DeclarativeMCM_SaveVariable(String path, Int index)
+	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	If typecode == TYPECODE_FLOAT
+		JsonUtil.SetFloatValue(path, variable, StorageUtil.GetFloatValue(None, variable))
+	ElseIf typecode == TYPECODE_STRING
+		JsonUtil.SetStringValue(path, variable, StorageUtil.GetStringValue(None, variable))
+	Else
+		JsonUtil.SetIntValue(path, variable, StorageUtil.GetIntValue(None, variable))
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_LoadVariable(String path, Int index)
+	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	If typecode == TYPECODE_FLOAT
+		Float fDefault = DeclarativeMCM_GetExtraFloat(index, 0)
+		StorageUtil.SetFloatValue(None, variable, JsonUtil.GetFloatValue(path, variable, fDefault))
+		return
+	EndIf
+	If typecode == TYPECODE_STRING
+		String sDefault = DeclarativeMCM_GetExtraString(index, 0)
+		StorageUtil.SetStringValue(None, variable, JsonUtil.GetStringValue(path, variable, sDefault))
+		return
+	EndIf
+	Int iDefault
+	If typecode == TYPECODE_BOOL || typecode == TYPECODE_INT
+		iDefault = DeclarativeMCM_GetExtraInt(index, 0)
+	ElseIf typecode == TYPECODE_ENUM || typecode == TYPECODE_KEY
+		iDefault = DeclarativeMCM_GetExtraInt(index, 1)
+	EndIf
+	StorageUtil.SetIntValue(None, variable, JsonUtil.GetIntValue(path, variable, iDefault))
 EndFunction
 
 Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String info, Int flags)
