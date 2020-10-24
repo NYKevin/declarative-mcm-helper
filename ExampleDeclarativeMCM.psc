@@ -5,6 +5,9 @@ Scriptname ExampleDeclarativeMCM extends DeclarativeMCMHelper
 ; If you don't override LocalDevelopment(), it will also run once on every game
 ; load, so that you can easily declare new variables on the development version
 ; of your mod.
+; Right before this function is called, all variables are un-declared so that
+; you can re-declare them with different arguments. This won't erase any of the
+; actual values, however, so the user's settings are preserved.
 Function DeclareVariables()
 	; Variable names should be prefixed with the mod name to avoid collisions.
 	DeclareBool("MyExampleMod_ModEnabled")
