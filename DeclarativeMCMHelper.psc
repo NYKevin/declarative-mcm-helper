@@ -350,19 +350,29 @@ EndFunction
 ; or else bad things may happen.
 
 Event OnConfigInit()
+	If DeclarativeMCM_InDeclareVariables
+		return
+	EndIf
+	DeclarativeMCM_InDeclareVariables = True
 	DeclarativeMCM_ClearVariables()
 	DeclareVariables()
 	If StorageUtil.StringListCount(self, DeclarativeMCM_PageList)
 		Pages = StorageUtil.StringListToArray(self, DeclarativeMCM_PageList)
 	EndIf
+	DeclarativeMCM_InDeclareVariables = False
 EndEvent
 
 Event OnVersionUpdate(Int version)
+	If DeclarativeMCM_InDeclareVariables
+		return
+	EndIf
+	DeclarativeMCM_InDeclareVariables = True
 	DeclarativeMCM_ClearVariables()
 	DeclareVariables()
 	If StorageUtil.StringListCount(self, DeclarativeMCM_PageList)
 		Pages = StorageUtil.StringListToArray(self, DeclarativeMCM_PageList)
 	EndIf
+	DeclarativeMCM_InDeclareVariables = False
 EndEvent
 
 String Function GetCustomControl(Int value)
@@ -387,11 +397,16 @@ EndFunction
 Event OnGameReload()
 	Parent.OnGameReload()
 	If LocalDevelopment()
+		If DeclarativeMCM_InDeclareVariables
+			return
+		EndIf
+		DeclarativeMCM_InDeclareVariables = True
 		DeclarativeMCM_ClearVariables()
 		DeclareVariables()
 		If StorageUtil.StringListCount(self, DeclarativeMCM_PageList)
 			Pages = StorageUtil.StringListToArray(self, DeclarativeMCM_PageList)
 		EndIf
+		DeclarativeMCM_InDeclareVariables = False
 	EndIf
 EndEvent
 
@@ -783,6 +798,8 @@ String Property DeclarativeMCM_OIDExtras = "DeclarativeMCM:OIDExtras" autoreadon
 
 ; Temporary variables for building arrays.
 String Property DeclarativeMCM_Scratch = "DeclarativeMCM:Scratch" autoreadonly
+
+Bool DeclarativeMCM_InDeclareVariables
 
 Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode)
 	Int result = StorageUtil.StringListAdd(self, DeclarativeMCM_VariableList, variable)
