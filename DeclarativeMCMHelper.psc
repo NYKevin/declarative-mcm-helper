@@ -125,8 +125,8 @@ Function DeclareEnum(String variable, Int size, Int default = 0)
 		default = 0
 	EndIf
 	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_ENUM)
-	DeclarativeMCM_PushExtraInt(index, size)
 	DeclarativeMCM_PushExtraInt(index, default)
+	DeclarativeMCM_PushExtraInt(index, size)
 	If !StorageUtil.HasIntValue(None, variable)
 		StorageUtil.SetIntValue(None, variable, default)
 	EndIf
@@ -272,7 +272,7 @@ Int Function MakeDropdown(String variable, String label, String[] choices, Strin
 	If index == -1
 		return -1
 	EndIf
-	Int size = DeclarativeMCM_GetExtraInt(index, 0)
+	Int size = DeclarativeMCM_GetExtraInt(index, 1)
 	If choices.length != size
 		DeclarativeMCM_WarnEnumMismatchedSize(variable)
 		return -1
@@ -297,7 +297,7 @@ Int Function MakeCycler(String variable, String label, String[] choices, String 
 	If index == -1
 		return -1
 	EndIf
-	Int size = DeclarativeMCM_GetExtraInt(index, 0)
+	Int size = DeclarativeMCM_GetExtraInt(index, 1)
 	If choices.length != size
 		DeclarativeMCM_WarnEnumMismatchedSize(variable)
 		return -1
@@ -500,7 +500,7 @@ Event OnOptionSelect(Int oid)
 		SetToggleOptionValue(oid, value)
 	ElseIf oidType == OID_TYPE_CYCLER
 		Int value = StorageUtil.GetIntValue(None, variable)
-		Int size = DeclarativeMCM_GetExtraInt(index, 0)
+		Int size = DeclarativeMCM_GetExtraInt(index, 1)
 		value += 1
 		value %= size
 		StorageUtil.SetIntValue(None, variable, value)
@@ -793,7 +793,7 @@ Event OnOptionDefault(Int oid)
 		EndIf
 		SetInputOptionValue(oid, default)
 	ElseIf oidType == OID_TYPE_DROPDOWN || oidType == OID_TYPE_CYCLER
-		Int default = DeclarativeMCM_GetExtraInt(index, 1)
+		Int default = DeclarativeMCM_GetExtraInt(index, 0)
 		StorageUtil.SetIntValue(None, variable, default)
 		If !Validate(variable)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
@@ -935,7 +935,7 @@ Function DeclarativeMCM_LoadVariable(String path, Int index)
 	If typecode == TYPECODE_BOOL || typecode == TYPECODE_INT
 		iDefault = DeclarativeMCM_GetExtraInt(index, 0)
 	ElseIf typecode == TYPECODE_ENUM || typecode == TYPECODE_KEY
-		iDefault = DeclarativeMCM_GetExtraInt(index, 1)
+		iDefault = DeclarativeMCM_GetExtraInt(index, 0)
 	EndIf
 	StorageUtil.SetIntValue(None, variable, JsonUtil.GetIntValue(path, variable, iDefault))
 EndFunction
