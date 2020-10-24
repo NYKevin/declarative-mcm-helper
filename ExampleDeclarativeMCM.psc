@@ -24,8 +24,8 @@ Function DeclareVariables()
 	; to deal with registering for keys yourself, set it to false.
 	DeclareKeyCode("MyExampleMod_HorseArmorHotkey", "Apply Horse Armor", true)
 
-	; For colors, use an integer. It's stored as 0xRRGGBB.
-	DeclareInt("MyExampleMod_HorseColor")
+	; For colors, use an integer. It's stored as 0xRRGGBB, so 0xFFFFFF is white.
+	DeclareInt("MyExampleMod_HorseColor", 0xFFFFFF)
 
 	; You can do this in the Creation Kit instead, if you prefer.
 	DeclarePage("Main")
