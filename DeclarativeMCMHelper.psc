@@ -189,26 +189,30 @@ Function SyncToGlobal(String variable, GlobalVariable dest)
 EndFunction
 
 ; Functions to call from MakeUserInterface():
+; All of these functions return an option ID, but you don't need to bother with
+; it unless you want to fiddle with the option's flags later. If -1 is returned,
+; it means something went wrong.
 
 ; Makes a checkbox for a boolean variable. label is shown inline, and
 ; extraInfo is shown on hover.
-Function MakeCheckbox(String variable, String label, String extraInfo, Int flags = 0)
+Int Function MakeCheckbox(String variable, String label, String extraInfo, Int flags = 0)
 	DeclareBool(variable)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_BOOL)
 	If index == -1
-		return
+		return -1
 	EndIf
 	Int oid = AddToggleOption(label, StorageUtil.GetIntValue(None, variable), flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CHECKBOX, extraInfo, flags)
+	return oid
 EndFunction
 
 ; Makes a slider for an integer variable. label is shown inline, and
 ; extraInfo is shown on hover.
-Function MakeIntSlider(String variable, String label, Int min, Int max, Int step, String extraInfo, String formatString = "{0}", Int flags = 0)
+Int Function MakeIntSlider(String variable, String label, Int min, Int max, Int step, String extraInfo, String formatString = "{0}", Int flags = 0)
 	DeclareInt(variable)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT)
 	If index == -1
-		return
+		return -1
 	EndIf
 	Int oid = AddSliderOption(label, StorageUtil.GetIntValue(None, variable), formatString, flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_INT_SLIDER, extraInfo, flags)
@@ -216,15 +220,16 @@ Function MakeIntSlider(String variable, String label, Int min, Int max, Int step
 	DeclarativeMCM_PushExtraInt(oidIndex, max, true)
 	DeclarativeMCM_PushExtraInt(oidIndex, step, true)
 	DeclarativeMCM_PushExtraString(oidIndex, formatString, true)
+	return oid
 EndFunction
 
 ; Makes a slider for a float variable. label is shown inline, and
 ; extraInfo is shown on hover.
-Function MakeFloatSlider(String variable, String label, Float min, Float max, Float step, String extraInfo, String formatString = "{0}", Int flags = 0)
+Int Function MakeFloatSlider(String variable, String label, Float min, Float max, Float step, String extraInfo, String formatString = "{0}", Int flags = 0)
 	DeclareFloat(variable)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_FLOAT)
 	If index == -1
-		return
+		return -1
 	EndIf
 	Int oid = AddSliderOption(label, StorageUtil.GetFloatValue(None, variable), formatString, flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLOAT_SLIDER, extraInfo, flags)
@@ -232,33 +237,35 @@ Function MakeFloatSlider(String variable, String label, Float min, Float max, Fl
 	DeclarativeMCM_PushExtraFloat(oidIndex, max, true)
 	DeclarativeMCM_PushExtraFloat(oidIndex, step, true)
 	DeclarativeMCM_PushExtraString(oidIndex, formatString, true)
+	return oid
 EndFunction
 
 ; Makes a text box for a string variable. label is shown inline, and
 ; extraInfo is shown on hover.
-Function MakeTextBox(String variable, String label, String extraInfo, Int flags = 0)
+Int Function MakeTextBox(String variable, String label, String extraInfo, Int flags = 0)
 	DeclareString(variable)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_STRING)
 	If index == -1
-		return
+		return -1
 	EndIf
 	Int oid = AddInputOption(label, StorageUtil.GetStringValue(None, variable), flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_TEXTBOX, extraInfo, flags)
+	return oid
 EndFunction
 
 ; Make a drop-down selector for an enum variable. label is shown inline,
 ; each element of choices is used for the corresponding value of variable, and
 ; extraInfo is shown on hover.
-Function MakeDropdown(String variable, String label, String[] choices, String extraInfo, Int flags = 0)
+Int Function MakeDropdown(String variable, String label, String[] choices, String extraInfo, Int flags = 0)
 	DeclareEnum(variable, choices.length)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM)
 	If index == -1
-		return
+		return -1
 	EndIf
 	Int size = DeclarativeMCM_GetExtraInt(index, 0)
 	If choices.length != size
 		DeclarativeMCM_WarnEnumMismatchedSize(variable)
-		return
+		return -1
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	Int oid = AddMenuOption(label, choices[value], flags)
@@ -268,21 +275,22 @@ Function MakeDropdown(String variable, String label, String[] choices, String ex
 		DeclarativeMCM_PushExtraString(oidIndex, choices[i], true)
 		i += 1
 	EndWhile
+	return oid
 EndFunction
 
 ; Make a text option that cycles through choices for an enum variable.
 ; Each time the user selects the option, it changes to the next choice. label is
 ; shown inline and extraInfo is shown on hover.
-Function MakeCycler(String variable, String label, String[] choices, String extraInfo, Int flags = 0)
+Int Function MakeCycler(String variable, String label, String[] choices, String extraInfo, Int flags = 0)
 	DeclareEnum(variable, choices.length)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM)
 	If index == -1
-		return
+		return -1
 	EndIf
 	Int size = DeclarativeMCM_GetExtraInt(index, 0)
 	If choices.length != size
 		DeclarativeMCM_WarnEnumMismatchedSize(variable)
-		return
+		return -1
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	Int oid = AddTextOption(label, choices[value], flags)
@@ -292,19 +300,21 @@ Function MakeCycler(String variable, String label, String[] choices, String extr
 		DeclarativeMCM_PushExtraString(oidIndex, choices[i], true)
 		i += 1
 	EndWhile
+	return oid
 EndFunction
 
 ; Make a color option for an integer variable. label is shown inline, and
 ; extraInfo is shown on hover. Colors are stored as 0xRRGGBB.
-Function MakeColor(String variable, String label, String extraInfo, Int flags = 0)
+Int Function MakeColor(String variable, String label, String extraInfo, Int flags = 0)
 	DeclareInt(variable)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT)
 	If index == -1
-		return
+		return -1
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	Int oid = AddColorOption(label, value, flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_COLOR, extraInfo, flags)
+	return oid
 EndFunction
 
 ; Make a key re-mapping control for an integer variable. The value will be
@@ -312,15 +322,16 @@ EndFunction
 ; If the user selects a key which is already in use, ShowConflictWarning() is
 ; called. If the variable was not previously declared, this will also call
 ; RegisterForKey() when the user picks a new value.
-Function MakeKeyMap(String variable, String label, String extraInfo, Int flags = 0)
+Int Function MakeKeyMap(String variable, String label, String extraInfo, Int flags = 0)
 	DeclareKeyCode(variable, label, True)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_KEY)
 	If index == -1
-		return
+		return -1
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	Int oid = AddKeyMapOption(label, value, flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_KEYMAP, extraInfo, flags)
+	return oid
 EndFunction
 
 ; MCM overrides:
