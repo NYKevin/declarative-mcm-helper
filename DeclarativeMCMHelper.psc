@@ -853,33 +853,49 @@ Int Property OID_TYPE_KEYMAP = 7 autoreadonly
 Int Property OID_TYPE_SAVE = 8 autoreadonly
 Int Property OID_TYPE_LOAD = 9 autoreadonly
 
-; Lists populated by DeclareFoo(). Cleared by OnVersionUpdate(), and
+; The internal variable table. Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.
+; The variable name
 String Property DeclarativeMCM_VariableList = "DeclarativeMCM:VariableList" autoreadonly
+; The variable type code (see above)
 String Property DeclarativeMCM_TypeList = "DeclarativeMCM:TypeList" autoreadonly
+; Offset into the integer version of ExtraList
 String Property DeclarativeMCM_OffsetList = "DeclarativeMCM:OffsetList" autoreadonly
+; Three lists of "extra data" associated with a variable.
 String Property DeclarativeMCM_ExtraList = "DeclarativeMCM:ExtraList" autoreadonly
 
+; Other stuff that also gets set up by DeclareVariables()
+; The list of pages that we will create.
 String Property DeclarativeMCM_PageList = "DeclarativeMCM:PageList" autoreadonly
+; The logo data.
 String Property DeclarativeMCM_LogoPath = "DeclarativeMCM:LogoPath" autoreadonly
 String Property DeclarativeMCM_LogoX = "DeclarativeMCM:LogoX" autoreadonly
 String Property DeclarativeMCM_LogoY = "DeclarativeMCM:LogoY" autoreadonly
-
+; The list of variables to sync to globals, and the list of globals to sync to.
 String Property DeclarativeMCM_GlobalSyncList = "DeclarativeMCM:GlobalSyncList" autoreadonly
 
-; Lists populated by MakeFoo(). Cleared by OnPageReset() and OnConfigClose().
+; The internal OID table. Cleared by OnPageReset() and OnConfigClose().
+; The OID.
 String Property DeclarativeMCM_OIDList = "DeclarativeMCM:OIDList" autoreadonly
+; The index into the variable table.
 String Property DeclarativeMCM_OIDIndices = "DeclarativeMCM:OIDIndices" autoreadonly
+; The OID type (see above)
 String Property DeclarativeMCM_OIDTypes = "DeclarativeMCM:OIDTypes" autoreadonly
+; Offset into the integer version of OIDExtras
 String Property DeclarativeMCM_OIDOffsets = "DeclarativeMCM:OIDOffsets" autoreadonly
+; The string to show on hover.
 String Property DeclarativeMCM_OIDInfos = "DeclarativeMCM:OIDInfos" autoreadonly
+; Three lists of "extra data" associated with an OID.
 String Property DeclarativeMCM_OIDExtras = "DeclarativeMCM:OIDExtras" autoreadonly
 
-; Temporary variables for building arrays.
+; Temporary variable for building arrays.
 String Property DeclarativeMCM_Scratch = "DeclarativeMCM:Scratch" autoreadonly
 
+; Lock to protect DeclareVariables() from being re-entered.
 Bool DeclarativeMCM_InDeclareVariables
 
+; Add a new variable to the internal variable table. Returns the index into the
+; table where the variable was created.
 Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode)
 	Int result = StorageUtil.StringListAdd(self, DeclarativeMCM_VariableList, variable)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_TypeList, typecode)
@@ -887,6 +903,7 @@ Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode)
 	return result
 EndFunction
 
+; Save a variable directly to path.
 Function DeclarativeMCM_SaveVariable(String path, Int index)
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
@@ -899,6 +916,8 @@ Function DeclarativeMCM_SaveVariable(String path, Int index)
 	EndIf
 EndFunction
 
+; Load a variable directly from path, or use its default value if JsonUtil
+; has no value to give us.
 Function DeclarativeMCM_LoadVariable(String path, Int index)
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
@@ -921,6 +940,7 @@ Function DeclarativeMCM_LoadVariable(String path, Int index)
 	StorageUtil.SetIntValue(None, variable, JsonUtil.GetIntValue(path, variable, iDefault))
 EndFunction
 
+; Save an OID. Returns the index into the OID table.
 Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String info)
 	Int result
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
@@ -944,6 +964,9 @@ Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String inf
 	return result
 EndFunction
 
+; Push an int of extra data, associated with index in either the variable table
+; or the OID table. Appends the int to an extra list, and sets the value in the
+; offset column to point to the first int pushed.
 Function DeclarativeMCM_PushExtraInt(Int index, Int extra, Bool oid = false)
 	String extraList
 	String offsetList
@@ -960,6 +983,8 @@ Function DeclarativeMCM_PushExtraInt(Int index, Int extra, Bool oid = false)
 	EndIf
 EndFunction
 
+; Push a float of extra data. Appends the float to an extra list, and pushes the
+; float's offset as an extra int (see above).
 Function DeclarativeMCM_PushExtraFloat(Int index, Float extra, Bool oid = false)
 	String extraList
 	String offsetList
@@ -974,6 +999,8 @@ Function DeclarativeMCM_PushExtraFloat(Int index, Float extra, Bool oid = false)
 	DeclarativeMCM_PushExtraInt(index, offsetIndex, oid)
 EndFunction
 
+; Push a string of extra data. Appends the string to an extra list, and pushes
+; the string's offset as an extra int (see above).
 Function DeclarativeMCM_PushExtraString(Int index, String extra, Bool oid = false)
 	String extraList
 	String offsetList
@@ -988,6 +1015,7 @@ Function DeclarativeMCM_PushExtraString(Int index, String extra, Bool oid = fals
 	DeclarativeMCM_PushExtraInt(index, offsetIndex, oid)
 EndFunction
 
+; Retrieval functions for the above push functions.
 Int Function DeclarativeMCM_GetExtraInt(Int index, int subIndex, Bool oid = false)
 	String extraList
 	String offsetList
@@ -1024,6 +1052,8 @@ String Function DeclarativeMCM_GetExtraString(Int index, Int subIndex, Bool oid 
 	return StorageUtil.StringListGet(self, extraList, offsetIndex)
 EndFunction
 
+; Clears the variable table. Doesn't touch the actual *values*, just our
+; internal metadata about them. DeclareVariables() will re-populate the table.
 Function DeclarativeMCM_ClearVariables()
 	StorageUtil.StringListClear(self, DeclarativeMCM_VariableList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_TypeList)
@@ -1039,6 +1069,7 @@ Function DeclarativeMCM_ClearVariables()
 	StorageUtil.UnsetFloatValue(self, DeclarativeMCM_LogoY)
 EndFunction
 
+; Clear the OID table. MakeUserInterface() will re-populate the table.
 Function DeclarativeMCM_ClearOIDs()
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDIndices)
@@ -1049,10 +1080,13 @@ Function DeclarativeMCM_ClearOIDs()
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDOffsets)
 EndFunction
 
+; Turns a string into an index into the variable table.
 Int Function DeclarativeMCM_FindVariable(String variable)
 	return StorageUtil.StringListFind(self, DeclarativeMCM_VariableList, variable)
 EndFunction
 
+; Return false if a variable already exists. Displays an error if the types
+; don't match.
 Bool Function DeclarativeMCM_ValidateDeclaration(String variable, Int typecode)
 	Int index = DeclarativeMCM_FindVariable(variable)
 	If index != -1 && StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) != typecode
@@ -1065,6 +1099,8 @@ Bool Function DeclarativeMCM_ValidateDeclaration(String variable, Int typecode)
 	return true
 EndFunction
 
+; Return the index into the variable table for the named variable, or -1 if the
+; variable is of the wrong type or doesn't exist.
 Int Function DeclarativeMCM_ValidateUI(String variable, Int typecode)
 	Int index = DeclarativeMCM_FindVariable(variable)
 	If StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) != typecode
@@ -1074,6 +1110,8 @@ Int Function DeclarativeMCM_ValidateUI(String variable, Int typecode)
 	return index
 EndFunction
 
+; Return the index into the variable table for the named variable, or -1 if the
+; variable doesn't exist or is a string (you can't put a string in a global).
 Int Function DeclarativeMCM_ValidateSyncToGlobal(String variable)
 	Int index = DeclarativeMCM_FindVariable(variable)
 	If index != -1 && StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) == TYPECODE_STRING
@@ -1085,6 +1123,9 @@ Int Function DeclarativeMCM_ValidateSyncToGlobal(String variable)
 	EndIf
 	return index
 EndFunction
+
+; Various error messages, which can be silenced by making LocalDevelopment()
+; return false.
 
 Function DeclarativeMCM_WarnBadDeclaration(String variable)
 	If LocalDevelopment()
