@@ -163,7 +163,8 @@ Function DeclareLogo(String path, Float x = 0.0, Float y = 0.0)
 EndFunction
 
 ; Declare that variable (which must already be declared) should be copied into
-; the GlobalVariable dest when the config page is closed.
+; the GlobalVariable dest when the config page is closed. Also initializes dest
+; with the current value of variable.
 Function SyncToGlobal(String variable, GlobalVariable dest)
 	Int index = DeclarativeMCM_ValidateSyncToGlobal(variable)
 	If index == -1
@@ -179,6 +180,12 @@ Function SyncToGlobal(String variable, GlobalVariable dest)
 	EndWhile
 	StorageUtil.IntListAdd(self, DeclarativeMCM_GlobalSyncList, index)
 	StorageUtil.FormListAdd(self, DeclarativeMCM_GlobalSyncList, dest)
+	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+	If typecode == TYPECODE_FLOAT
+		dest.SetValue(StorageUtil.GetFloatValue(None, variable))
+	Else
+		dest.SetValue(StorageUtil.GetIntValue(None, variable) as Float)
+	EndIf
 EndFunction
 
 ; Functions to call from MakeUserInterface():
