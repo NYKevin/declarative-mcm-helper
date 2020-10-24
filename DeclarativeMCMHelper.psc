@@ -755,81 +755,68 @@ Event OnOptionDefault(Int oid)
 	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-	Int iOldValue = StorageUtil.GetIntValue(None, variable)
-	Float fOldValue = StorageUtil.GetFloatValue(None, variable)
-	String sOldValue = StorageUtil.GetStringValue(None, variable)
-	If oidType == OID_TYPE_CHECKBOX
-		Bool default = DeclarativeMCM_GetExtraInt(index, 0)
-		StorageUtil.SetIntValue(None, variable, default as Int)
-		If !Validate(variable)
-			StorageUtil.SetIntValue(None, variable, iOldValue)
-			return
-		EndIf
-		SetToggleOptionValue(oid, default)
-	ElseIf oidType == OID_TYPE_INT_SLIDER 
-		Int default = DeclarativeMCM_GetExtraInt(index, 0)
-		StorageUtil.SetIntValue(None, variable, default)
-		If !Validate(variable)
-			StorageUtil.SetIntValue(None, variable, iOldValue)
-			return
-		EndIf
-		String formatString = DeclarativeMCM_GetExtraString(oidIndex, 3, true)
-		SetSliderOptionValue(oid, default, formatString)
-	ElseIf oidType == OID_TYPE_FLOAT_SLIDER
-		Float default = DeclarativeMCM_GetExtraFloat(index, 0)
-		StorageUtil.SetFloatValue(None, variable, default)
+	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+	Float fDefault
+	Float fOldValue
+	String sDefault
+	String sOldValue
+	Int iDefault
+	Int iOldValue
+	If typecode == TYPECODE_FLOAT
+		fOldValue = StorageUtil.GetFloatValue(None, variable)
+		fDefault = DeclarativeMCM_GetExtraFloat(index, 0)
+		StorageUtil.SetFloatValue(None, variable, fDefault)
 		If !Validate(variable)
 			StorageUtil.SetFloatValue(None, variable, fOldValue)
 			return
 		EndIf
-		String formatString = DeclarativeMCM_GetExtraString(oidIndex, 3, true)
-		SetSliderOptionValue(oid, default, formatString)
-	ElseIf oidType == OID_TYPE_TEXTBOX
-		String default = DeclarativeMCM_GetExtraString(index, 0)
-		StorageUtil.SetStringValue(None, variable, default)
+	ElseIf typecode == TYPECODE_STRING
+		sOldValue = StorageUtil.GetStringValue(None, variable)
+		sDefault = DeclarativeMCM_GetExtraString(index, 0)
+		StorageUtil.SetStringValue(None, variable, sDefault)
 		If !Validate(variable)
 			StorageUtil.SetStringValue(None, variable, sOldValue)
 			return
 		EndIf
-		SetInputOptionValue(oid, default)
-	ElseIf oidType == OID_TYPE_DROPDOWN || oidType == OID_TYPE_CYCLER
-		Int default = DeclarativeMCM_GetExtraInt(index, 0)
-		StorageUtil.SetIntValue(None, variable, default)
+	Else
+		iOldValue = StorageUtil.GetIntValue(None, variable)
+		iDefault = DeclarativeMCM_GetExtraInt(index, 0)
+		StorageUtil.SetIntValue(None, variable, iDefault)
 		If !Validate(variable)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
 			return
 		EndIf
-		String displayValue = DeclarativeMCM_GetExtraString(oidIndex, default, true)
+	EndIf
+	If oidType == OID_TYPE_CHECKBOX
+		SetToggleOptionValue(oid, iDefault)
+	ElseIf oidType == OID_TYPE_INT_SLIDER
+		String formatString = DeclarativeMCM_GetExtraString(oidIndex, 3, true)
+		SetSliderOptionValue(oid, iDefault, formatString)
+	ElseIf oidType == OID_TYPE_FLOAT_SLIDER
+		String formatString = DeclarativeMCM_GetExtraString(oidIndex, 3, true)
+		SetSliderOptionValue(oid, fDefault, formatString)
+	ElseIf oidType == OID_TYPE_TEXTBOX
+		SetInputOptionValue(oid, sDefault)
+	ElseIf oidType == OID_TYPE_DROPDOWN || oidType == OID_TYPE_CYCLER
+		String displayValue = DeclarativeMCM_GetExtraString(oidIndex, iDefault, true)
 		If oidType == OID_TYPE_DROPDOWN
 			SetMenuOptionValue(oid, displayValue)
 		Else
 			SetTextOptionValue(oid, displayValue)
 		EndIf
 	ElseIf oidType == OID_TYPE_COLOR
-		Int default = DeclarativeMCM_GetExtraInt(index, 0)
-		StorageUtil.SetIntValue(None, variable, default)
-		If !Validate(variable)
-			StorageUtil.SetIntValue(None, variable, iOldValue)
-			return
-		EndIf
-		SetColorOptionValue(oid, default)
+		SetColorOptionValue(oid, iDefault)
 	ElseIf oidType == OID_TYPE_KEYMAP
-		Int default = DeclarativeMCM_GetExtraInt(index, 0)
-		StorageUtil.SetIntValue(None, variable, default)
-		If !Validate(variable)
-			StorageUtil.SetIntValue(None, variable, iOldValue)
-			return
-		EndIf
 		Bool registerForKey = DeclarativeMCM_GetExtraInt(index, 1)
 		If registerForKey
 			If iOldValue
 				UnregisterForKey(iOldValue)
 			EndIf
-			If default
-				RegisterForKey(default)
+			If iDefault
+				RegisterForKey(iDefault)
 			EndIf
 		EndIf
-		SetKeyMapOptionValue(oid, default)
+		SetKeyMapOptionValue(oid, iDefault)
 	EndIf
 EndEvent
 
