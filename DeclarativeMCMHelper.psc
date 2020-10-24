@@ -37,6 +37,10 @@ EndFunction
 
 ; Functions to call from DeclareVariables():
 
+; Note: Multiple calls to these functions with the same variable names are
+; ignored. It's always safe to re-declare a variable that already exists.
+; However, if the types don't match, you will get an error.
+
 ; Declare a new boolean value.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
 ; It is strongly recommended to prefix variable with the name of your mod.
@@ -145,6 +149,9 @@ EndFunction
 ; If you do not call this function, then the Pages variable will be left alone.
 ; Do this if you prefer to configure pages from the Creation Kit.
 Function DeclarePage(String name)
+	If StorageUtil.StringListFind(self, DeclarativeMCM_PageList, name) != -1
+		return
+	EndIf
 	StorageUtil.StringListAdd(self, DeclarativeMCM_PageList, name)
 EndFunction
 
