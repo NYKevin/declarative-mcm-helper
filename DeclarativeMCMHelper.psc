@@ -28,6 +28,14 @@ Function MakeUserInterface(String page)
 	DeclarativeMCM_WarnNoMakeUI()
 EndFunction
 
+; Called every time a variable is changed through the UI. Return true if the
+; current state is valid, and return false to reject the change. If rejecting,
+; you should also display an error message with ShowMessage().
+; Validation is skipped when setting a variable to its default value.
+Bool Function Validate(String variable)
+	return True
+EndFunction
+
 ; Called when a key remapping conflicts with an existing key mapping.
 ; Return true if the key should be remapped anyway. Override if your users don't
 ; speak English.
@@ -433,6 +441,10 @@ Event OnOptionSelect(Int oid)
 		Bool value = StorageUtil.GetIntValue(None, variable)
 		value = !value
 		StorageUtil.SetIntValue(None, variable, value as Int)
+		If !Validate(variable)
+			StorageUtil.SetIntValue(None, variable, (!value) as Int)
+			return
+		EndIf
 		SetToggleOptionValue(oid, value)
 	ElseIf oidType == OID_TYPE_CYCLER
 		Int value = StorageUtil.GetIntValue(None, variable)
@@ -440,6 +452,12 @@ Event OnOptionSelect(Int oid)
 		value += 1
 		value %= size
 		StorageUtil.SetIntValue(None, variable, value)
+		If !Validate(variable)
+			value += size - 1
+			value %= size
+			StorageUtil.SetIntValue(None, variable, value)
+			return
+		EndIf
 		SetTextOptionValue(oid, DeclarativeMCM_GetExtraString(oidIndex, value, true))
 	EndIf
 EndEvent
@@ -484,9 +502,19 @@ Event OnOptionSliderAccept(Int oid, Float value)
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	If oidType == OID_TYPE_INT_SLIDER
+		Int oldValue = StorageUtil.GetIntValue(None, variable)
 		StorageUtil.SetIntValue(None, variable, value as Int)
+		If !validate(variable)
+			StorageUtil.SetIntValue(None, variable, oldValue)
+			return
+		EndIf
 	ElseIf oidType == OID_TYPE_FLOAT_SLIDER
+		Float oldValue = StorageUtil.GetFloatValue(None, variable)
 		StorageUtil.SetFloatValue(None, variable, value)
+		If !validate(variable)
+			StorageUtil.SetFloatValue(None, variable, oldValue)
+			return
+		EndIf
 	EndIf
 	String formatString = DeclarativeMCM_GetExtraString(oidIndex, 3, true)
 	SetSliderOptionValue(oid, value, formatString)
@@ -509,7 +537,12 @@ Event OnOptionInputAccept(Int oid, String value)
 	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	String oldValue = StorageUtil.GetStringValue(None, variable)
 	StorageUtil.SetStringValue(None, variable, value)
+	If !Validate(variable)
+		StorageUtil.SetStringValue(None, variable, oldValue)
+		return
+	EndIf
 	SetInputOptionValue(oid, value)
 EndEvent
 
@@ -543,7 +576,12 @@ Event OnMenuOptionAccept(Int oid, Int value)
 	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	Int oldValue = StorageUtil.GetIntValue(None, variable)
 	StorageUtil.SetIntValue(None, variable, value)
+	If !Validate(variable)
+		StorageUtil.SetIntValue(None, variable, oldValue)
+		return
+	EndIf
 	SetMenuOptionValue(oid, value)
 EndEvent
 
@@ -567,7 +605,12 @@ Event OnOptionColorAccept(Int oid, Int value)
 	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	Int oldValue = StorageUtil.GetIntValue(None, variable)
 	StorageUtil.SetIntValue(None, variable, value)
+	If !Validate(variable)
+		StorageUtil.SetIntValue(None, variable, oldValue)
+		return
+	EndIf
 	SetColorOptionValue(oid, value)
 EndEvent
 
@@ -581,9 +624,14 @@ Event OnOptionKeyMapChange(Int oid, Int value, String conflictControl, String co
 	If (conflictControl || conflictMod) && !HandleKeyConflict(variable, conflictControl, conflictMod)
 		return
 	EndIf
+	Int oldValue = StorageUtil.GetIntValue(None, variable)
+	StorageUtil.SetIntValue(None, variable, value)
+	If !Validate(variable)
+		StorageUtil.SetIntValue(None, variable, oldValue)
+		return
+	EndIf
 	Bool registerForKey = DeclarativeMCM_GetExtraInt(index, 0)
 	If registerForKey
-		Int oldValue = StorageUtil.GetIntValue(None, variable)
 		If oldValue
 			UnregisterForKey(oldValue)
 		EndIf
@@ -591,7 +639,6 @@ Event OnOptionKeyMapChange(Int oid, Int value, String conflictControl, String co
 			RegisterForKey(value)
 		EndIf
 	EndIf
-	StorageUtil.SetIntValue(None, variable, value)
 	SetKeyMapOptionValue(oid, value)
 EndEvent
 
