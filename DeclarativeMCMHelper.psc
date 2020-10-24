@@ -722,7 +722,7 @@ Event OnOptionKeyMapChange(Int oid, Int value, String conflictControl, String co
 		StorageUtil.SetIntValue(None, variable, oldValue)
 		return
 	EndIf
-	Bool registerForKey = DeclarativeMCM_GetExtraInt(index, 0)
+	Bool registerForKey = DeclarativeMCM_GetExtraInt(index, 1)
 	If registerForKey
 		If oldValue
 			UnregisterForKey(oldValue)
