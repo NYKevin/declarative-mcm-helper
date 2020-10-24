@@ -1,0 +1,1 @@
+Scriptname ExampleDeclarativeMCM extends DeclarativeMCMHelper
