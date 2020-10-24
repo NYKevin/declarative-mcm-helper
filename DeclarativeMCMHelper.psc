@@ -565,7 +565,7 @@ Event OnOptionInputAccept(Int oid, String value)
 	SetInputOptionValue(oid, value)
 EndEvent
 
-Event OnMenuOptionOpen(Int oid)
+Event OnOptionMenuOpen(Int oid)
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex == -1
 		return
@@ -588,7 +588,7 @@ Event OnMenuOptionOpen(Int oid)
 	StorageUtil.StringListClear(self, DeclarativeMCM_Scratch)
 EndEvent
 
-Event OnMenuOptionAccept(Int oid, Int value)
+Event OnOptionMenuAccept(Int oid, Int value)
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex == -1
 		return
@@ -601,7 +601,8 @@ Event OnMenuOptionAccept(Int oid, Int value)
 		StorageUtil.SetIntValue(None, variable, oldValue)
 		return
 	EndIf
-	SetMenuOptionValue(oid, value)
+	String choice = DeclarativeMCM_GetExtraString(oidIndex, value, true)
+	SetMenuOptionValue(oid, choice)
 EndEvent
 
 Event OnOptionColorOpen(Int oid)
@@ -900,7 +901,7 @@ Float Function DeclarativeMCM_GetExtraFloat(Int index, Int subIndex, Bool oid = 
 	Else
 		extraList = DeclarativeMCM_ExtraList
 	EndIf
-	Int offsetIndex = DeclarativeMCM_GetExtraInt(index, subIndex)
+	Int offsetIndex = DeclarativeMCM_GetExtraInt(index, subIndex, oid)
 	return StorageUtil.FloatListGet(self, extraList, offsetIndex)
 EndFunction
 
@@ -911,7 +912,7 @@ String Function DeclarativeMCM_GetExtraString(Int index, Int subIndex, Bool oid 
 	Else
 		extraList = DeclarativeMCM_ExtraList
 	EndIf
-	Int offsetIndex = DeclarativeMCM_GetExtraInt(index, subIndex)
+	Int offsetIndex = DeclarativeMCM_GetExtraInt(index, subIndex, oid)
 	return StorageUtil.StringListGet(self, extraList, offsetIndex)
 EndFunction
 
@@ -931,7 +932,7 @@ Function DeclarativeMCM_ClearVariables()
 EndFunction
 
 Function DeclarativeMCM_ClearOIDs()
-	StorageUtil.StringListClear(self, DeclarativeMCM_OIDList)
+	StorageUtil.IntListClear(self, DeclarativeMCM_OIDList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDIndices)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDFlags)
 	StorageUtil.StringListClear(self, DeclarativeMCM_OIDInfos)
