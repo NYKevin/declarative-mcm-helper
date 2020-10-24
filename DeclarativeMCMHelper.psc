@@ -931,12 +931,7 @@ Function DeclarativeMCM_LoadVariable(String path, Int index)
 		StorageUtil.SetStringValue(None, variable, JsonUtil.GetStringValue(path, variable, sDefault))
 		return
 	EndIf
-	Int iDefault
-	If typecode == TYPECODE_BOOL || typecode == TYPECODE_INT
-		iDefault = DeclarativeMCM_GetExtraInt(index, 0)
-	ElseIf typecode == TYPECODE_ENUM || typecode == TYPECODE_KEY
-		iDefault = DeclarativeMCM_GetExtraInt(index, 0)
-	EndIf
+	Int iDefault = DeclarativeMCM_GetExtraInt(index, 0)
 	StorageUtil.SetIntValue(None, variable, JsonUtil.GetIntValue(path, variable, iDefault))
 EndFunction
 
