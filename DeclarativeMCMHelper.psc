@@ -843,7 +843,7 @@ EndFunction
 Int Function DeclarativeMCM_ValidateUI(String variable, Int typecode)
 	Int index = DeclarativeMCM_FindVariable(variable)
 	If StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) != typecode
-		DeclarativeMCM_WarnMismatchedTypes(variable)
+		; Caller already tried to declare it, so fail silently.
 		return -1
 	EndIf
 	return index
@@ -894,12 +894,6 @@ EndFunction
 Function DeclarativeMCM_WarnUndeclaredVariable(String variable)
 	If LocalDevelopment()
 		Debug.MessageBox("Warning: Can't sync undeclared variable: " + variable)
-	EndIf
-EndFunction
-
-Function DeclarativeMCM_WarnMismatchedTypes(String variable)
-	If LocalDevelopment()
-		ShowMessage("Warning: The variable " + variable + " has a type incompatible with one of its UI elements.", false)
 	EndIf
 EndFunction
 
