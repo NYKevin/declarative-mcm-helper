@@ -398,6 +398,8 @@ Event OnGameReload()
 	Parent.OnGameReload()
 	If LocalDevelopment()
 		If DeclarativeMCM_InDeclareVariables
+			Debug.Notification("DeclarativeMCM: Can't declare any new variables right now.")
+			Debug.Notification("Try waiting a couple of seconds, saving, and loading again.")
 			return
 		EndIf
 		DeclarativeMCM_InDeclareVariables = True
