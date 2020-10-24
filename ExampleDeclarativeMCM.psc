@@ -78,6 +78,10 @@ Function MakeUserInterface(String page)
 
 	MakeKeyMap("MyExampleMod_HorseArmorHotkey", "Apply horse armor", "Hotkey to apply or remove horse armor.")
 	MakeColor("MyExampleMod_HorseColor", "Horse color", "Color of your horse.")
+
+	; You can easily create save and load buttons for all declared variables.
+	MakeSaveButton("../MyExampleMod/profile", "Save settings", "Save", "Save your settings to an external file.", "Your settings have been saved.", "Something went wrong.")
+	MakeLoadButton("../MyExampleMod/profile", "Load settings", "Load", "Load your settings from an external file.", "Your settings have been loaded.", "Something went wrong.")
 EndFunction
 
 ; We do not need to implement any of the OnOptionSelect etc. events. They're
