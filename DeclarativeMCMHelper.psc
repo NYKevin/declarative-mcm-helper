@@ -162,6 +162,25 @@ Function DeclareLogo(String path, Float x = 0.0, Float y = 0.0)
 	StorageUtil.SetFloatValue(self, DeclarativeMCM_LogoY, y)
 EndFunction
 
+; Declare that variable (which must already be declared) should be copied into
+; the GlobalVariable dest when the config page is closed.
+Function SyncToGlobal(String variable, GlobalVariable dest)
+	Int index = DeclarativeMCM_ValidateSyncToGlobal(variable)
+	If index == -1
+		return
+	EndIf
+	Int i = 0
+	Int len = StorageUtil.IntListCount(self, DeclarativeMCM_GlobalSyncList)
+	While i < len
+		If StorageUtil.IntListGet(self, DeclarativeMCM_GlobalSyncList, i) == index && StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, i) == dest
+			return
+		EndIf
+		i += 1
+	EndWhile
+	StorageUtil.IntListAdd(self, DeclarativeMCM_GlobalSyncList, index)
+	StorageUtil.FormListAdd(self, DeclarativeMCM_GlobalSyncList, dest)
+EndFunction
+
 ; Functions to call from MakeUserInterface():
 
 ; Makes a checkbox for a boolean variable. label is shown inline, and
@@ -363,6 +382,24 @@ EndEvent
 
 Event OnConfigClose()
 	DeclarativeMCM_ClearOIDs()
+	Int i = 0
+	Int len = StorageUtil.IntListCount(self, DeclarativeMCM_GlobalSyncList)
+	While i < len
+		Int index = StorageUtil.IntListGet(self, DeclarativeMCM_GlobalSyncList, i)
+		GlobalVariable dest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, i) as GlobalVariable
+		String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+		Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+		If dest
+			If typecode == TYPECODE_FLOAT
+				Float value = StorageUtil.GetFloatValue(None, variable)
+				dest.SetValue(value)
+			Else
+				Int value = StorageUtil.GetIntValue(None, variable)
+				dest.SetValue(value as Float)
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
 EndEvent
 
 Event OnOptionSelect(Int oid)
@@ -635,6 +672,8 @@ String Property DeclarativeMCM_LogoPath = "DeclarativeMCM:LogoPath" autoreadonly
 String Property DeclarativeMCM_LogoX = "DeclarativeMCM:LogoX" autoreadonly
 String Property DeclarativeMCM_LogoY = "DeclarativeMCM:LogoY" autoreadonly
 
+String Property DeclarativeMCM_GlobalSyncList = "DeclarativeMCM:GlobalSyncList" autoreadonly
+
 ; Lists populated by MakeFoo(). Cleared by OnPageReset() and OnConfigClose().
 String Property DeclarativeMCM_OIDList = "DeclarativeMCM:OIDList" autoreadonly
 String Property DeclarativeMCM_OIDIndices = "DeclarativeMCM:OIDIndices" autoreadonly
@@ -767,6 +806,8 @@ Function DeclarativeMCM_ClearVariables()
 	StorageUtil.StringListClear(self, DeclarativeMCM_ExtraList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OffsetList)
 	StorageUtil.StringListClear(self, DeclarativeMCM_PageList)
+	StorageUtil.StringListClear(self, DeclarativeMCM_GlobalSyncList)
+	StorageUtil.FormListClear(self, DeclarativeMCM_GlobalSyncList)
 	StorageUtil.UnsetStringValue(self, DeclarativeMCM_LogoPath)
 	StorageUtil.UnsetFloatValue(self, DeclarativeMCM_LogoX)
 	StorageUtil.UnsetFloatValue(self, DeclarativeMCM_LogoY)
@@ -808,6 +849,18 @@ Int Function DeclarativeMCM_ValidateUI(String variable, Int typecode)
 	return index
 EndFunction
 
+Int Function DeclarativeMCM_ValidateSyncToGlobal(String variable)
+	Int index = DeclarativeMCM_FindVariable(variable)
+	If index != -1 && StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) == TYPECODE_STRING
+		DeclarativeMCM_WarnCantSync(variable)
+		return -1
+	EndIf
+	If index == -1
+		DeclarativeMCM_WarnUndeclaredVariable(variable)
+	EndIf
+	return index
+EndFunction
+
 Function DeclarativeMCM_WarnBadDeclaration(String variable)
 	If LocalDevelopment()
 		Debug.MessageBox("Warning: Multiple incompatible declarations of variable: " + variable)
@@ -829,6 +882,18 @@ EndFunction
 Function DeclarativeMCM_WarnBadEnumDefault(String variable)
 	If LocalDevelopment()
 		Debug.MessageBox("Warning: Default value of " + variable + " is invalid, using zero instead.")
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnCantSync(String variable)
+	If LocalDevelopment()
+		Debug.MessageBox("Warning: Can't sync string variable " + variable + " to a global.")
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnUndeclaredVariable(String variable)
+	If LocalDevelopment()
+		Debug.MessageBox("Warning: Can't sync undeclared variable: " + variable)
 	EndIf
 EndFunction
 
