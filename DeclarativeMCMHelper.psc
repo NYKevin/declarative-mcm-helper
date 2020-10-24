@@ -834,23 +834,23 @@ EndEvent
 
 ; Private members, do not use directly:
 
-Int Property TYPECODE_BOOL = 1 autoreadonly
-Int Property TYPECODE_INT = 2 autoreadonly
-Int Property TYPECODE_FLOAT = 3 autoreadonly
-Int Property TYPECODE_STRING = 4 autoreadonly
-Int Property TYPECODE_ENUM = 5 autoreadonly
-Int Property TYPECODE_KEY = 6 autoreadonly
+Int Property TYPECODE_BOOL = 0 autoreadonly
+Int Property TYPECODE_INT = 1 autoreadonly
+Int Property TYPECODE_FLOAT = 2 autoreadonly
+Int Property TYPECODE_STRING = 3 autoreadonly
+Int Property TYPECODE_ENUM = 4 autoreadonly
+Int Property TYPECODE_KEY = 5 autoreadonly
 
-Int Property OID_TYPE_CHECKBOX = 1 autoreadonly
-Int Property OID_TYPE_INT_SLIDER = 2 autoreadonly
-Int Property OID_TYPE_FLOAT_SLIDER = 3 autoreadonly
-Int Property OID_TYPE_TEXTBOX = 4 autoreadonly
-Int Property OID_TYPE_DROPDOWN = 5 autoreadonly
-Int Property OID_TYPE_CYCLER = 6 autoreadonly
-Int Property OID_TYPE_COLOR = 7 autoreadonly
-Int Property OID_TYPE_KEYMAP = 8 autoreadonly
-Int Property OID_TYPE_SAVE = 9 autoreadonly
-Int Property OID_TYPE_LOAD = 10 autoreadonly
+Int Property OID_TYPE_CHECKBOX = 0 autoreadonly
+Int Property OID_TYPE_INT_SLIDER = 1 autoreadonly
+Int Property OID_TYPE_FLOAT_SLIDER = 2 autoreadonly
+Int Property OID_TYPE_TEXTBOX = 3 autoreadonly
+Int Property OID_TYPE_DROPDOWN = 4 autoreadonly
+Int Property OID_TYPE_CYCLER = 5 autoreadonly
+Int Property OID_TYPE_COLOR = 6 autoreadonly
+Int Property OID_TYPE_KEYMAP = 7 autoreadonly
+Int Property OID_TYPE_SAVE = 8 autoreadonly
+Int Property OID_TYPE_LOAD = 9 autoreadonly
 
 ; Lists populated by DeclareFoo(). Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.
