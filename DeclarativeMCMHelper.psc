@@ -514,7 +514,7 @@ Event OnOptionSelect(Int oid)
 	ElseIf oidType == OID_TYPE_SAVE
 		String path = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
 		Int i = 0
-		Int count = StorageUtil.IntListCount(self, DeclarativeMCM_VariableList)
+		Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
 		While i < count
 			DeclarativeMCM_SaveVariable(path, i)
 			i += 1
@@ -540,7 +540,7 @@ Event OnOptionSelect(Int oid)
 			return
 		EndIf
 		Int i = 0
-		Int count = StorageUtil.IntListCount(self, DeclarativeMCM_VariableList)
+		Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
 		While i < count
 			DeclarativeMCM_LoadVariable(path, i)
 			i += 1
@@ -549,6 +549,7 @@ Event OnOptionSelect(Int oid)
 		If successMessage
 			ShowMessage(successMessage, false)
 		EndIf
+		ForcePageReset()
 	EndIf
 EndEvent
 
