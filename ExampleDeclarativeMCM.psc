@@ -22,6 +22,8 @@ Function DeclareVariables()
 	; can be reported to other mods which try to use the same key.
 	; The true means "Call RegisterForKey() when the key is mapped." If you want
 	; to deal with registering for keys yourself, set it to false.
+	; The default value of zero is interpreted as "no key" and RegisterForKey()
+	; will not be called until the user changes it to something else.
 	DeclareKeyCode("MyExampleMod_HorseArmorHotkey", "Apply Horse Armor", true)
 
 	; For colors, use an integer. It's stored as 0xRRGGBB, so 0xFFFFFF is white.
