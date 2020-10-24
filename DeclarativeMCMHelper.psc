@@ -124,6 +124,7 @@ EndFunction
 ; the same key. If registerForKey is true, we call RegisterForKey() every time
 ; this variable's value changes, and UnregisterForKey() on the previous value.
 ; The value can later be accessed with StorageUtil.GetIntValue(None, variable).
+; It is strongly recommended to prefix variable with the name of your mod.
 Function DeclareKeyCode(String variable, String nameForConflicts, Bool registerForKey, Int default = 0)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_KEY)
 		return
