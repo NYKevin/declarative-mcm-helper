@@ -1,4 +1,4 @@
-Scriptname DeclarativeMCMHelper extends SKI_ConfigBase
+Scriptname DeclarativeMCMHelper extends SKI_ConfigBase Hidden
 
 ; Functions which you should override:
 
