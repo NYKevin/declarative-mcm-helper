@@ -230,6 +230,7 @@ EndFunction
 ; Makes a text box for a string variable. label is shown inline, and
 ; extraInfo is shown on hover.
 Function MakeTextBox(String variable, String label, String extraInfo, Int flags = 0)
+	DeclareString(variable)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_STRING)
 	If index == -1
 		return
