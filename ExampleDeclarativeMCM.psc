@@ -35,8 +35,9 @@ Function DeclareVariables()
 	; You can do this in the Creation Kit instead, if you prefer.
 	DeclarePage("Main")
 
-	; Can also pass x and y arguments as offsets.
+	; This logo will appear automatically when the user opens the menu.
 	DeclareLogo("MyExampleMod/logo.dds")
+	; Can also pass x and y arguments as offsets.
 EndFunction
 
 ; Enum constants for MyExampleMod:HorseArmorType:
