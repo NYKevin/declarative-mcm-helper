@@ -48,7 +48,8 @@ Function DeclareVariables()
 	DeclareLogo("MyExampleMod/logo.dds")
 	; Can also pass x and y arguments as offsets.
 
-	DeclareInt("MyExampleMod:SlotMask")
+	; A is binary 1010, so this is alternating ones and zeros.
+	DeclareInt("MyExampleMod:SlotMask", 0xAAAAAAAA)
 	; When executing other startup code, we need to be careful, because
 	; DeclareVariables() may be called more than once.
 	If !MaskLabels
@@ -102,7 +103,8 @@ Function MakeUserInterface(String page)
 	; a text option that cycles through the choices one at a time when the user
 	; selects it.
 
-	MakeKeyMap("MyExampleMod:HorseArmorHotkey", "Apply horse armor", "Hotkey to apply or remove horse armor.")
+	MakeKeyMap("MyExampleMod:HorseArmorHotkey", "Horse armor hotkey", "Hotkey to apply or remove horse armor.")
+	MakeTextBox("MyExampleMod:HorseName", "Horse's name", "The name of your horse.")
 	MakeColor("MyExampleMod:HorseColor", "Horse color", "Color of your horse.")
 
 	; You can easily create save and load buttons for all declared variables.
