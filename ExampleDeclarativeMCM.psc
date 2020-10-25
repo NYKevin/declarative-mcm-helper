@@ -1,4 +1,7 @@
 Scriptname ExampleDeclarativeMCM extends DeclarativeMCMHelper
+; This file is an example of a simple MCM. It's meant to demonstrate most of the
+; available functionality, but it can't cover everything. Read
+; DeclarativeMCMHelper.psc if you want an API reference.
 
 ; Start by declaring all of the variables we want to use, and their default
 ; values. This code runs once on startup, and again when the mod is updated.
