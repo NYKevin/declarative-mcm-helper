@@ -428,6 +428,16 @@ Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool
 	return result
 EndFunction
 
+; Create a text option that, when clicked, resets all variables to their default
+; values. If confirmationMessage is non-empty, the user will be prompted with
+; ShowMessage(confirmationMessage) before the reset happens.
+; Validate() will not be called.
+Int Function MakeResetButton(String label, String buttonText, String extraInfo, String confirmationMessage, Int flags = 0)
+	Int oid = AddTextOption(label, buttonText, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_RESET, extraInfo)
+	DeclarativeMCM_PushExtraString(oidIndex, confirmationMessage, true)
+EndFunction
+
 ; MCM overrides:
 ; WARNING: If you are going to override any of these functions, you should call
 ; Parent.Function() (e.g. Parent.OnConfigInit(), Parent.OnVersionUpdate(), etc.)
@@ -614,6 +624,26 @@ Event OnOptionSelect(Int oid)
 			return
 		EndIf
 		SetToggleOptionValue(oid, Math.LogicalAnd(value, mask))
+	ElseIf oidType == OID_TYPE_RESET
+		String confirmationMessage = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
+		If confirmationMessage && !ShowMessage(confirmationMessage)
+			return
+		EndIf
+		Int i = 0
+		Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
+		While i < count
+			Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, i)
+			variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, i)
+			If typecode == TYPECODE_STRING
+				DeclarativeMCM_ResetStringVariable(i, variable)
+			ElseIf typecode == TYPECODE_FLOAT
+				DeclarativeMCM_ResetFloatVariable(i, variable)
+			Else
+				DeclarativeMCM_ResetIntVariable(i, variable)
+			EndIf
+			i += 1
+		EndWhile
+		ForcePageReset()
 	EndIf
 EndEvent
 
@@ -842,24 +872,21 @@ Event OnOptionDefault(Int oid)
 		return
 	ElseIf typecode == TYPECODE_FLOAT
 		fOldValue = StorageUtil.GetFloatValue(None, variable)
-		fDefault = DeclarativeMCM_GetExtraFloat(index, 0)
-		StorageUtil.SetFloatValue(None, variable, fDefault)
+		fDefault = DeclarativeMCM_ResetIntVariable(index, variable)
 		If !Validate(variable)
 			StorageUtil.SetFloatValue(None, variable, fOldValue)
 			return
 		EndIf
 	ElseIf typecode == TYPECODE_STRING
 		sOldValue = StorageUtil.GetStringValue(None, variable)
-		sDefault = DeclarativeMCM_GetExtraString(index, 0)
-		StorageUtil.SetStringValue(None, variable, sDefault)
+		sDefault = DeclarativeMCM_ResetStringVariable(index, variable)
 		If !Validate(variable)
 			StorageUtil.SetStringValue(None, variable, sOldValue)
 			return
 		EndIf
 	Else
 		iOldValue = StorageUtil.GetIntValue(None, variable)
-		iDefault = DeclarativeMCM_GetExtraInt(index, 0)
-		StorageUtil.SetIntValue(None, variable, iDefault)
+		iDefault = DeclarativeMCM_ResetIntVariable(index, variable)
 		If !Validate(variable)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
 			return
@@ -918,6 +945,7 @@ Int Property OID_TYPE_KEYMAP = 7 autoreadonly
 Int Property OID_TYPE_SAVE = 8 autoreadonly
 Int Property OID_TYPE_LOAD = 9 autoreadonly
 Int Property OID_TYPE_MASK = 10 autoreadonly
+Int Property OID_TYPE_RESET = 11 autoreadonly
 
 ; The internal variable table. Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.
@@ -999,6 +1027,25 @@ Function DeclarativeMCM_LoadVariable(String path, Int index)
 	EndIf
 	Int iDefault = DeclarativeMCM_GetExtraInt(index, 0)
 	StorageUtil.SetIntValue(None, variable, JsonUtil.GetIntValue(path, variable, iDefault))
+EndFunction
+
+; Resets a variable to its default value, which is then returned.
+Int Function DeclarativeMCM_ResetIntVariable(Int index, String variable)
+	Int default = DeclarativeMCM_GetExtraInt(index, 0)
+	StorageUtil.SetIntValue(None, variable, default)
+	return default
+EndFunction
+
+Float Function DeclarativeMCM_ResetFloatVariable(Int index, String variable)
+	Float default = DeclarativeMCM_GetExtraFloat(index, 0)
+	StorageUtil.SetFloatValue(None, variable, default)
+	return default
+EndFunction
+
+String Function DeclarativeMCM_ResetStringVariable(Int index, String variable)
+	String default = DeclarativeMCM_GetExtraString(index, 0)
+	StorageUtil.SetStringValue(None, variable, default)
+	return default
 EndFunction
 
 ; Save an OID. Returns the index into the OID table.

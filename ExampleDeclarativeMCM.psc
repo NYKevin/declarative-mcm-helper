@@ -110,6 +110,8 @@ Function MakeUserInterface(String page)
 	; You can easily create save and load buttons for all declared variables.
 	MakeSaveButton("../MyExampleMod/profile", "Save settings", "Save", "Save your settings to an external file.", "Your settings have been saved.", "Something went wrong.")
 	MakeLoadButton("../MyExampleMod/profile", "Load settings", "Load", "Load your settings from an external file.", "Your settings have been loaded.", "Something went wrong.")
+	; And a reset button, too.
+	MakeResetButton("Reset all to default", "Reset", "Resets all settings to their default values.", "Are you sure you want to reset everything?")
 
 	; Go to the other column...
 	SetCursorPosition(3)
