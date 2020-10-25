@@ -174,7 +174,8 @@ EndFunction
 
 ; Declare that variable (which must already be declared) should be copied into
 ; the GlobalVariable dest when the config page is closed. Also initializes dest
-; with the current value of variable.
+; with the current value of variable. Syncing is strictly one-way; changes to
+; dest will not be reflected in StorageUtil.
 Function SyncToGlobal(String variable, GlobalVariable dest)
 	Int index = DeclarativeMCM_ValidateSyncToGlobal(variable)
 	If index == -1
