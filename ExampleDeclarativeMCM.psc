@@ -116,7 +116,10 @@ Function MakeUserInterface(String page)
 	; Go to the other column...
 	SetCursorPosition(3)
 
-	; Create 32 checkboxes, one for each bit in SlotMask.
+	; Create 32 checkboxes, one for each bit in SlotMask. Toggling a checkbox
+	; will toggle the corresponding bit. This could be useful for armor slot
+	; masks, or any situation where you want to pack a lot of boolean values
+	; into a small amount of space.
 	MakeMask("MyExampleMod:SlotMask", MaskLabels, "Slot mask for your horse's armor.")
 	; This version starts with the least significant bit (little-endian bit
 	; order). If you want to start with the most significant bit (big-endian bit
