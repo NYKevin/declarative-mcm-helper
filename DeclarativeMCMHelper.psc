@@ -374,6 +374,60 @@ Int Function MakeLoadButton(String path, String label, String buttonText, String
 	return oid
 EndFunction
 
+; Create a series of checkboxes to control the individual bits of an integer.
+; Checkboxes are created from least to most significant, unless bigEndian is
+; true (which will reverse the order). The variable should be an integer.
+; Each label is shown inline; if a label is the empty string, the corresponding
+; checkbox is skipped. If there are more than 32 labels, the extras are ignored.
+; extraInfo is shown when any of the checkboxes is hovered.
+; Return None if the variable is of the wrong type.
+Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool bigEndian = false, Int flags = 0)
+	DeclareInt(variable)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT)
+	If index == -1
+		return None
+	EndIf
+	Int value = StorageUtil.GetIntValue(None, variable)
+	Int i = 0
+	Int count = labels.length
+	If count > 32
+		count = 32
+	EndIf
+	Int mask
+	If bigEndian
+		mask = Math.LeftShift(1, count - 1)
+	Else
+		mask = 1
+	EndIf
+	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
+	While i < 32
+		If labels[i]
+			Int oid = AddToggleOption(labels[i], Math.LogicalAnd(value, mask), flags)
+			Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_MASK, extraInfo)
+			DeclarativeMCM_PushExtraInt(oidIndex, mask, true)
+			StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
+		EndIf
+		i += 1
+		If bigEndian
+			; Nasty hack to deal with integer overflow being weird.
+			If mask == 0x80000000
+				mask = 0x40000000
+			Else
+				mask /= 2
+			EndIf
+		Else
+			If mask == 0x40000000
+				mask = 0x80000000
+			Else
+				mask *= 2
+			EndIf
+		EndIf
+	EndWhile
+	Int[] result = StorageUtil.IntListToArray(self, DeclarativeMCM_Scratch)
+	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
+	return result
+EndFunction
+
 ; MCM overrides:
 ; WARNING: If you are going to override any of these functions, you should call
 ; Parent.Function() (e.g. Parent.OnConfigInit(), Parent.OnVersionUpdate(), etc.)
@@ -550,6 +604,16 @@ Event OnOptionSelect(Int oid)
 			ShowMessage(successMessage, false)
 		EndIf
 		ForcePageReset()
+	ElseIf oidType == OID_TYPE_MASK
+		Int oldValue = StorageUtil.GetIntValue(None, variable)
+		Int mask = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
+		Int value = Math.LogicalXor(oldValue, mask)
+		StorageUtil.SetIntValue(None, variable, value)
+		If !Validate(variable)
+			StorageUtil.SetIntValue(None, variable, oldValue)
+			return
+		EndIf
+		SetToggleOptionValue(oid, Math.LogicalAnd(value, mask))
 	EndIf
 EndEvent
 
@@ -762,7 +826,21 @@ Event OnOptionDefault(Int oid)
 	String sOldValue
 	Int iDefault
 	Int iOldValue
-	If typecode == TYPECODE_FLOAT
+	If oidType == OID_TYPE_MASK
+		iOldValue = StorageUtil.GetIntValue(None, variable)
+		Int newValue = iOldValue
+		iDefault = DeclarativeMCM_GetExtraInt(index, 0)
+		Int mask = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
+		Int maskedDefault = Math.LogicalAnd(mask, iDefault)
+		newValue = Math.LogicalAnd(Math.LogicalNot(mask), newValue)
+		newValue = Math.LogicalOr(maskedDefault, newValue)
+		StorageUtil.SetIntValue(None, variable, newValue)
+		If !Validate(variable)
+			StorageUtil.SetIntValue(None, variable, iOldValue)
+		EndIf
+		SetToggleOptionValue(oid, maskedDefault)
+		return
+	ElseIf typecode == TYPECODE_FLOAT
 		fOldValue = StorageUtil.GetFloatValue(None, variable)
 		fDefault = DeclarativeMCM_GetExtraFloat(index, 0)
 		StorageUtil.SetFloatValue(None, variable, fDefault)
@@ -839,6 +917,7 @@ Int Property OID_TYPE_COLOR = 6 autoreadonly
 Int Property OID_TYPE_KEYMAP = 7 autoreadonly
 Int Property OID_TYPE_SAVE = 8 autoreadonly
 Int Property OID_TYPE_LOAD = 9 autoreadonly
+Int Property OID_TYPE_MASK = 10 autoreadonly
 
 ; The internal variable table. Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.

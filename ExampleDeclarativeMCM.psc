@@ -20,6 +20,15 @@ Function DeclareVariables()
 	; For enumerated types, you must indicate how many values there are.
 	; The values always start at zero.
 	DeclareEnum("MyExampleMod:HorseArmorType", 4, HORSE_ARMOR_STEEL)
+	; While we're at it, let's create the strings that will be used to describe
+	; those enum constants:
+	If !EnumLabels
+		EnumLabels = new String[4]
+		EnumLabels[0] = "Iron"
+		EnumLabels[1] = "Steel"
+		EnumLabels[2] = "Dwarven"
+		EnumLabels[3] = "Ebony"
+	EndIf
 
 	; For key codes, we need to give a short description so that key conflicts
 	; can be reported to other mods which try to use the same key.
@@ -38,6 +47,23 @@ Function DeclareVariables()
 	; This logo will appear automatically when the user opens the menu.
 	DeclareLogo("MyExampleMod/logo.dds")
 	; Can also pass x and y arguments as offsets.
+
+	DeclareInt("MyExampleMod:SlotMask")
+	; When executing other startup code, we need to be careful, because
+	; DeclareVariables() may be called more than once.
+	If !MaskLabels
+		MaskLabels = new String[32]
+		Int i
+		While i < 32
+			; Slot numbers start at 30.
+			; Horses don't use all 32 slots, but let's ignore that for now.
+			MaskLabels[i] = (i+30) as String
+			; Creating lots of strings can take an unreasonable amount of time,
+			; so it's usually a good idea to put that logic here instead of
+			; in MakeUserInterface().
+			i += 1
+		EndWhile
+	EndIf
 EndFunction
 
 ; Enum constants for MyExampleMod:HorseArmorType:
@@ -45,6 +71,9 @@ Int Property HORSE_ARMOR_IRON = 0 autoreadonly
 Int Property HORSE_ARMOR_STEEL = 1 autoreadonly
 Int Property HORSE_ARMOR_DWARVEN = 2 autoreadonly
 Int Property HORSE_ARMOR_EBONY = 3 autoreadonly
+
+String[] EnumLabels
+String[] MaskLabels
 
 ; Now, it's time to build our UI.
 Function MakeUserInterface(String page)
@@ -54,6 +83,7 @@ Function MakeUserInterface(String page)
 	; You can still call all of the usual MCM functions from here.
 	AddHeaderOption("My Example Mod")
 	AddEmptyOption()
+	SetCursorFillMode(TOP_TO_BOTTOM)
 
 	; The variable should have already been declared earlier, but if we forget,
 	; it is declared automatically. The second argument is the label, and the
@@ -67,12 +97,7 @@ Function MakeUserInterface(String page)
 	MakeFloatSlider("MyExampleMod:HorseArmorWeight", "Horse armor weight", 0.0, 200.0, 0.5, "How much horse armor should weigh.", "{1}")
 
 	; A simple drop-down menu.
-	String[] choices = new String[4]
-	choices[0] = "Iron"
-	choices[1] = "Steel"
-	choices[2] = "Dwarven"
-	choices[3] = "Ebony"
-	MakeDropdown("MyExampleMod:HorseArmorType", "Horse armor type", choices, "What type of horse armor you want.")
+	MakeDropdown("MyExampleMod:HorseArmorType", "Horse armor type", EnumLabels, "What type of horse armor you want.")
 	; You could also use MakeCycler(), which takes the same arguments. It makes
 	; a text option that cycles through the choices one at a time when the user
 	; selects it.
@@ -83,6 +108,16 @@ Function MakeUserInterface(String page)
 	; You can easily create save and load buttons for all declared variables.
 	MakeSaveButton("../MyExampleMod/profile", "Save settings", "Save", "Save your settings to an external file.", "Your settings have been saved.", "Something went wrong.")
 	MakeLoadButton("../MyExampleMod/profile", "Load settings", "Load", "Load your settings from an external file.", "Your settings have been loaded.", "Something went wrong.")
+
+	; Go to the other column...
+	SetCursorPosition(3)
+
+	; Create 32 checkboxes, one for each bit in SlotMask.
+	MakeMask("MyExampleMod:SlotMask", MaskLabels, "Slot mask for your horse's armor.")
+	; This version starts with the least significant bit (little-endian bit
+	; order). If you want to start with the most significant bit (big-endian bit
+	; order), pass true as the optional fourth argument. You may also need to
+	; reverse the order of your labels if you do so.
 EndFunction
 
 ; We do not need to implement any of the OnOptionSelect etc. events. They're
