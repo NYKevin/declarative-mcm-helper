@@ -88,7 +88,7 @@ EndFunction
 ; done for us!
 
 Event OnKeyDown(Int KeyCode)
-	If KeyCode == StorageUtil.GetIntValue(None, "MyExampleMod:HorseArmorHotkey")
+	If KeyCode == StorageUtil.GetIntValue(None, "MyExampleMod:HorseArmorHotkey") && StorageUtil.GetIntValue(None, "MyExampleMod:ModEnabled")
 		Debug.Notification("Applying your " + StorageUtil.GetIntValue(None, "MyExampleMod:HorseArmorPrice") + " septim armor to " + StorageUtil.GetStringValue(None, "MyExampleMod:HorseName"))
 		Debug.Notification("It weighs " + StorageUtil.GetFloatValue(None, "MyExampleMod:HorseArmorWeight"))
 		; and so on...
