@@ -894,6 +894,9 @@ Event OnOptionHighlight(Int oid)
 EndEvent
 
 Event OnOptionDefault(Int oid)
+	; Defaulting a variable is probably one of the most complex things we have
+	; to support. We start by finding the underlying variable that owns this
+	; OID.
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex == -1
 		return
@@ -912,6 +915,8 @@ Event OnOptionDefault(Int oid)
 	String sOldValue
 	Int iDefault
 	Int iOldValue
+	; In *most* cases, we want to default the entire variable, but there's one
+	; exception to that rule. For masks, just default the one checkbox.
 	If oidType == OID_TYPE_MASK
 		iOldValue = StorageUtil.GetIntValue(None, variable)
 		Int newValue = iOldValue
@@ -927,6 +932,9 @@ Event OnOptionDefault(Int oid)
 		EndIf
 		SetToggleOptionValue(oid, maskedDefault)
 		return
+	; For all other cases, retrieve the default and the current (old) value,
+	; set the variable to the default, call Validate(), and if it accepts the
+	; default, then fall through to the next part.
 	ElseIf typecode == TYPECODE_FLOAT
 		fOldValue = StorageUtil.GetFloatValue(None, variable)
 		fDefault = DeclarativeMCM_ResetIntVariable(index, variable)
@@ -958,6 +966,8 @@ Event OnOptionDefault(Int oid)
 			return
 		EndIf
 	EndIf
+	; Finally, now that we know we've definitely changed the value, it's time to
+	; make the UI match.
 	If oidType == OID_TYPE_CHECKBOX
 		SetToggleOptionValue(oid, iDefault)
 	ElseIf oidType == OID_TYPE_INT_SLIDER
