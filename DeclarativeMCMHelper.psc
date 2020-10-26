@@ -844,11 +844,12 @@ Event OnOptionDefault(Int oid)
 	If oidIndex == -1
 		return
 	EndIf
-	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
-	If oidType == OID_TYPE_SAVE || oidType == OID_TYPE_LOAD
+	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
+	If index == -1
+		; Save/load/reset buttons, and other controls with no variable.
 		return
 	EndIf
-	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
+	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	Float fDefault
