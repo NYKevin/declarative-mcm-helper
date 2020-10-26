@@ -439,6 +439,38 @@ Int Function MakeResetButton(String label, String buttonText, String extraInfo, 
 	DeclarativeMCM_PushExtraString(oidIndex, confirmationMessage, true)
 EndFunction
 
+; Create a series of checkboxes that act like radio buttons. Each checkbox
+; corresonds to one possible value of variable (which should be an enum). When
+; the user selects a checkbox, all of the other checkboxes de-select themselves.
+; If a label is the empty string, the corresponding radio button is skipped.
+Int[] Function MakeRadioButtons(String variable, String[] labels, String extraInfo, Int flags = 0)
+	DeclareEnum(variable, labels.length)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM)
+	If index == -1
+		return None
+	EndIf
+	Int size = DeclarativeMCM_GetExtraInt(index, 1)
+	If labels.length != size
+		DeclarativeMCM_WarnEnumMismatchedSize(variable)
+		return None
+	EndIf
+	Int i = 0
+	Int value = StorageUtil.GetIntValue(None, variable)
+	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
+	While i < labels.length
+		If labels[i]
+			Int oid = AddToggleOption(labels[i], i == value, flags)
+			Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_RADIO, extraInfo)
+			DeclarativeMCM_PushExtraInt(oidIndex, i, true)
+			StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
+		EndIf
+		i += 1
+	EndWhile
+	Int[] result = StorageUtil.IntListToArray(self, DeclarativeMCM_Scratch)
+	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
+	return result
+EndFunction
+
 ; MCM overrides:
 ; WARNING: If you are going to override any of these functions, you should call
 ; Parent.Function() (e.g. Parent.OnConfigInit(), Parent.OnVersionUpdate(), etc.)
@@ -645,6 +677,28 @@ Event OnOptionSelect(Int oid)
 			i += 1
 		EndWhile
 		ForcePageReset()
+	ElseIf oidType == OID_TYPE_RADIO
+		Int oldValue = StorageUtil.GetIntValue(None, variable)
+		Int size = DeclarativeMCM_GetExtraInt(index, 1)
+		Int value = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
+		If value == oldValue
+			return
+		EndIf
+		StorageUtil.SetIntValue(None, variable, value)
+		If !Validate(variable)
+			StorageUtil.SetIntValue(None, variable, oldValue)
+			return
+		EndIf
+		SetToggleOptionValue(oid, true)
+		Int i = 0
+		Int count = StorageUtil.IntListCount(self, DeclarativeMCM_OIDList)
+		While i < count
+			If StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, i) == OID_TYPE_RADIO && StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, i) == index && DeclarativeMCM_GetExtraInt(i, 0, true) == oldValue
+				SetToggleOptionValue(StorageUtil.IntListGet(self, DeclarativeMCM_OIDList, i), false)
+				return
+			EndIf
+			i += 1
+		EndWhile
 	EndIf
 EndEvent
 
@@ -924,6 +978,24 @@ Event OnOptionDefault(Int oid)
 			EndIf
 		EndIf
 		SetKeyMapOptionValue(oid, iDefault)
+	ElseIf oidType == OID_TYPE_RADIO
+		Int i = 0
+		Int count = StorageUtil.IntListCount(self, DeclarativeMCM_OIDList)
+		Bool foundOldValue = false
+		Bool foundDefault = false
+		While i < count && (!foundOldValue || !foundDefault)
+			If StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, i) == OID_TYPE_RADIO && StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, i) == index
+				Int myValue = DeclarativeMCM_GetExtraInt(i, 0, true)
+				If myValue == iOldValue
+					SetToggleOptionValue(StorageUtil.IntListGet(self, DeclarativeMCM_OIDList, i), false)
+					foundOldValue = true
+				ElseIf myValue == iDefault
+					SetToggleOptionValue(StorageUtil.IntListGet(self, DeclarativeMCM_OIDList, i), true)
+					foundDefault = true
+				EndIf
+			EndIf
+			i += 1
+		EndWhile
 	EndIf
 EndEvent
 
@@ -948,6 +1020,7 @@ Int Property OID_TYPE_SAVE = 8 autoreadonly
 Int Property OID_TYPE_LOAD = 9 autoreadonly
 Int Property OID_TYPE_MASK = 10 autoreadonly
 Int Property OID_TYPE_RESET = 11 autoreadonly
+Int Property OID_TYPE_RADIO = 12 autoreadonly
 
 ; The internal variable table. Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.
