@@ -929,6 +929,9 @@ Event OnOptionDefault(Int oid)
 	ElseIf typecode == TYPECODE_FLOAT
 		fOldValue = StorageUtil.GetFloatValue(None, variable)
 		fDefault = DeclarativeMCM_ResetIntVariable(index, variable)
+		If fOldValue == fDefault
+			return
+		EndIf
 		If !Validate(variable)
 			StorageUtil.SetFloatValue(None, variable, fOldValue)
 			return
@@ -936,6 +939,9 @@ Event OnOptionDefault(Int oid)
 	ElseIf typecode == TYPECODE_STRING
 		sOldValue = StorageUtil.GetStringValue(None, variable)
 		sDefault = DeclarativeMCM_ResetStringVariable(index, variable)
+		If sOldValue == sDefault
+			return
+		EndIf
 		If !Validate(variable)
 			StorageUtil.SetStringValue(None, variable, sOldValue)
 			return
@@ -943,6 +949,9 @@ Event OnOptionDefault(Int oid)
 	Else
 		iOldValue = StorageUtil.GetIntValue(None, variable)
 		iDefault = DeclarativeMCM_ResetIntVariable(index, variable)
+		If iOldValue == iDefault
+			return
+		EndIf
 		If !Validate(variable)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
 			return
