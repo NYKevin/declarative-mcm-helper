@@ -923,6 +923,7 @@ Event OnOptionDefault(Int oid)
 		StorageUtil.SetIntValue(None, variable, newValue)
 		If !Validate(variable)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
+			return
 		EndIf
 		SetToggleOptionValue(oid, maskedDefault)
 		return
