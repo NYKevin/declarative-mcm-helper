@@ -199,6 +199,36 @@ Function SyncToGlobal(String variable, GlobalVariable dest)
 	EndIf
 EndFunction
 
+; Declare that the variable left depends on the variable right in some way.
+; Pass one of the integers listed below as verb.
+;
+; Indicates that the controls for left should be disabled whenever right is
+; falsey. This will not prevent left from being truthy when right is falsey, it
+; just disables the UI element(s). For input validaiton, override Validate().
+Int Property REQUIRES = 0 autoreadonly
+; Indicates that the controls for left should be disabled whenever right is
+; truthy. This will not prevent left from being truthy when right is truthy.
+Int Property CONFLICTS_WITH = 1 autoreadonly
+Function DeclareDependency(String left, Int verb, String right)
+	Int leftIndex = DeclarativeMCM_ValidateVariableExists(left)
+	If leftIndex == -1
+		return
+	EndIf
+	Int rightIndex = DeclarativeMCM_ValidateVariableExists(right)
+	If rightIndex == -1
+		return
+	EndIf
+	If !DeclarativeMCM_ValidateDependency(leftIndex, verb, rightIndex)
+		return
+	EndIf
+	StorageUtil.IntListAdd(self, DeclarativeMCM_DependencyLHS, leftIndex)
+	StorageUtil.IntListAdd(self, DeclarativeMCM_DependencyRHS, rightIndex)
+	StorageUtil.IntListAdd(self, DeclarativeMCM_DependencyType, verb)
+	StorageUtil.IntListSet(self, DeclarativeMCM_IsDependent, leftIndex, 1)
+	StorageUtil.IntListSet(self, DeclarativeMCM_HasDependent, rightIndex, 1)
+EndFunction
+
+
 ; Functions to call from MakeUserInterface():
 ; All of these functions return an option ID, but you don't need to bother with
 ; it unless you want to fiddle with the option's flags later. If -1 is returned,
@@ -551,6 +581,7 @@ Event OnPageReset(String page)
 	EndIf
 	DeclarativeMCM_ClearOIDs()
 	MakeUserInterface(page)
+	DeclarativeMCM_ProcessAllTriggers()
 EndEvent
 
 Event OnConfigClose()
@@ -594,6 +625,7 @@ Event OnOptionSelect(Int oid)
 			StorageUtil.SetIntValue(None, variable, (!value) as Int)
 			return
 		EndIf
+		DeclarativeMCM_ProcessTriggers(index)
 		SetToggleOptionValue(oid, value)
 	ElseIf oidType == OID_TYPE_CYCLER
 		Int value = StorageUtil.GetIntValue(None, variable)
@@ -606,6 +638,9 @@ Event OnOptionSelect(Int oid)
 			value %= size
 			StorageUtil.SetIntValue(None, variable, value)
 			return
+		EndIf
+		If value == 0 || value == 1
+			DeclarativeMCM_ProcessTriggers(index)
 		EndIf
 		SetTextOptionValue(oid, DeclarativeMCM_GetExtraString(oidIndex, value, true))
 	ElseIf oidType == OID_TYPE_SAVE
@@ -656,6 +691,9 @@ Event OnOptionSelect(Int oid)
 			StorageUtil.SetIntValue(None, variable, oldValue)
 			return
 		EndIf
+		If (value as Bool) != (oldValue as Bool)
+			DeclarativeMCM_ProcessTriggers(index)
+		EndIf
 		SetToggleOptionValue(oid, Math.LogicalAnd(value, mask))
 	ElseIf oidType == OID_TYPE_RESET
 		String confirmationMessage = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
@@ -688,6 +726,9 @@ Event OnOptionSelect(Int oid)
 		If !Validate(variable)
 			StorageUtil.SetIntValue(None, variable, oldValue)
 			return
+		EndIf
+		If (value as Bool) != (oldValue as Bool)
+			DeclarativeMCM_ProcessTriggers(index)
 		EndIf
 		SetToggleOptionValue(oid, true)
 		Int i = 0
@@ -748,12 +789,18 @@ Event OnOptionSliderAccept(Int oid, Float value)
 			StorageUtil.SetIntValue(None, variable, oldValue)
 			return
 		EndIf
+		If ((value as Int) as Bool) != (oldValue as Bool)
+			DeclarativeMCM_ProcessTriggers(index)
+		EndIf
 	ElseIf oidType == OID_TYPE_FLOAT_SLIDER
 		Float oldValue = StorageUtil.GetFloatValue(None, variable)
 		StorageUtil.SetFloatValue(None, variable, value)
 		If !validate(variable)
 			StorageUtil.SetFloatValue(None, variable, oldValue)
 			return
+		EndIf
+		If (value as Bool) != (oldValue as Bool)
+			DeclarativeMCM_ProcessTriggers(index)
 		EndIf
 	EndIf
 	String formatString = DeclarativeMCM_GetExtraString(oidIndex, 3, true)
@@ -782,6 +829,9 @@ Event OnOptionInputAccept(Int oid, String value)
 	If !Validate(variable)
 		StorageUtil.SetStringValue(None, variable, oldValue)
 		return
+	EndIf
+	If (value as Bool) != (oldValue as Bool)
+		DeclarativeMCM_ProcessTriggers(index)
 	EndIf
 	SetInputOptionValue(oid, value)
 EndEvent
@@ -822,6 +872,9 @@ Event OnOptionMenuAccept(Int oid, Int value)
 		StorageUtil.SetIntValue(None, variable, oldValue)
 		return
 	EndIf
+	If (value as Bool) != (oldValue as Bool)
+		DeclarativeMCM_ProcessTriggers(index)
+	EndIf
 	String choice = DeclarativeMCM_GetExtraString(oidIndex, value, true)
 	SetMenuOptionValue(oid, choice)
 EndEvent
@@ -852,6 +905,9 @@ Event OnOptionColorAccept(Int oid, Int value)
 		StorageUtil.SetIntValue(None, variable, oldValue)
 		return
 	EndIf
+	If (value as Bool) != (oldValue as Bool)
+		DeclarativeMCM_ProcessTriggers(index)
+	EndIf
 	SetColorOptionValue(oid, value)
 EndEvent
 
@@ -879,6 +935,9 @@ Event OnOptionKeyMapChange(Int oid, Int value, String conflictControl, String co
 		If value
 			RegisterForKey(value)
 		EndIf
+	EndIf
+	If (value as Bool) != (oldValue as Bool)
+		DeclarativeMCM_ProcessTriggers(index)
 	EndIf
 	SetKeyMapOptionValue(oid, value)
 EndEvent
@@ -930,6 +989,9 @@ Event OnOptionDefault(Int oid)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
 			return
 		EndIf
+		If (newValue as Bool) != (iOldValue as Bool)
+			DeclarativeMCM_ProcessTriggers(index)
+		EndIf
 		SetToggleOptionValue(oid, maskedDefault)
 		return
 	; For all other cases, retrieve the default and the current (old) value,
@@ -945,6 +1007,9 @@ Event OnOptionDefault(Int oid)
 			StorageUtil.SetFloatValue(None, variable, fOldValue)
 			return
 		EndIf
+		If (fOldValue as Bool) != (fDefault as Bool)
+			DeclarativeMCM_ProcessTriggers(index)
+		EndIf
 	ElseIf typecode == TYPECODE_STRING
 		sOldValue = StorageUtil.GetStringValue(None, variable)
 		sDefault = DeclarativeMCM_ResetStringVariable(index, variable)
@@ -955,6 +1020,9 @@ Event OnOptionDefault(Int oid)
 			StorageUtil.SetStringValue(None, variable, sOldValue)
 			return
 		EndIf
+		If (sOldValue as Bool) != (sDefault as Bool)
+			DeclarativeMCM_ProcessTriggers(index)
+		EndIf
 	Else
 		iOldValue = StorageUtil.GetIntValue(None, variable)
 		iDefault = DeclarativeMCM_ResetIntVariable(index, variable)
@@ -964,6 +1032,9 @@ Event OnOptionDefault(Int oid)
 		If !Validate(variable)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
 			return
+		EndIf
+		If (iOldValue as Bool) != (iDefault as Bool)
+			DeclarativeMCM_ProcessTriggers(index)
 		EndIf
 	EndIf
 	; Finally, now that we know we've definitely changed the value, it's time to
@@ -1019,6 +1090,12 @@ Event OnOptionDefault(Int oid)
 	EndIf
 EndEvent
 
+Function SetOptionFlags(int option, int flags, bool noUpdate = false)
+	Parent.SetOptionFlags(option, flags, noUpdate)
+	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, option)
+	StorageUtil.IntListSet(self, DeclarativeMCM_OIDFlags, oidIndex, flags)
+EndFunction
+
 ; Private members, do not use directly:
 
 Int Property TYPECODE_BOOL = 0 autoreadonly
@@ -1052,6 +1129,10 @@ String Property DeclarativeMCM_TypeList = "DeclarativeMCM:TypeList" autoreadonly
 String Property DeclarativeMCM_OffsetList = "DeclarativeMCM:OffsetList" autoreadonly
 ; Three lists of "extra data" associated with a variable.
 String Property DeclarativeMCM_ExtraList = "DeclarativeMCM:ExtraList" autoreadonly
+; Truthy if this variable is the LHS of a dependency
+String Property DeclarativeMCM_IsDependent = "DeclarativeMCM:IsDependent" autoreadonly
+; Truthy if this variable is the RHS of a dependency
+String Property DeclarativeMCM_HasDependent = "DeclarativeMCM:HasDependent" autoreadonly
 
 ; Other stuff that also gets set up by DeclareVariables()
 ; The list of pages that we will create.
@@ -1062,6 +1143,10 @@ String Property DeclarativeMCM_LogoX = "DeclarativeMCM:LogoX" autoreadonly
 String Property DeclarativeMCM_LogoY = "DeclarativeMCM:LogoY" autoreadonly
 ; The list of variables to sync to globals, and the list of globals to sync to.
 String Property DeclarativeMCM_GlobalSyncList = "DeclarativeMCM:GlobalSyncList" autoreadonly
+; LHS and RHS for dependencies
+String Property DeclarativeMCM_DependencyLHS = "DeclarativeMCM:DependencyLHS" autoreadonly
+String Property DeclarativeMCM_DependencyRHS = "DeclarativeMCM:DependencyRHS" autoreadonly
+String Property DeclarativeMCM_DependencyType = "DeclarativeMCM:DependencyType" autoreadonly
 
 ; The internal OID table. Cleared by OnPageReset() and OnConfigClose().
 ; The OID.
@@ -1078,6 +1163,8 @@ String Property DeclarativeMCM_OIDInfos = "DeclarativeMCM:OIDInfos" autoreadonly
 String Property DeclarativeMCM_OIDFlags = "DeclarativeMCM:OIDFlags" autoreadonly
 ; Three lists of "extra data" associated with an OID.
 String Property DeclarativeMCM_OIDExtras = "DeclarativeMCM:OIDExtras" autoreadonly
+; OIDs that are the LHS of a dependency
+String Property DeclarativeMCM_OIDsWithDependencies = "DeclarativeMCM:OIDsWithDependencies" autoreadonly
 
 ; Temporary variable for building arrays.
 String Property DeclarativeMCM_Scratch = "DeclarativeMCM:Scratch" autoreadonly
@@ -1091,6 +1178,8 @@ Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode)
 	Int result = StorageUtil.StringListAdd(self, DeclarativeMCM_VariableList, variable)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_TypeList, typecode)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_OffsetList, -1)
+	StorageUtil.IntListAdd(self, DeclarativeMCM_IsDependent, 0)
+	StorageUtil.IntListAdd(self, DeclarativeMCM_HasDependent, 0)
 	return result
 EndFunction
 
@@ -1124,6 +1213,89 @@ Function DeclarativeMCM_LoadVariable(String path, Int index)
 	EndIf
 	Int iDefault = DeclarativeMCM_GetExtraInt(index, 0)
 	StorageUtil.SetIntValue(None, variable, JsonUtil.GetIntValue(path, variable, iDefault))
+EndFunction
+
+Bool Function DeclarativeMCM_IsTruthy(Int index)
+	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+	If typecode == TYPECODE_STRING
+		return StorageUtil.GetStringValue(None, variable)
+	ElseIf typecode == TYPECODE_FLOAT
+		return StorageUtil.GetFloatValue(None, variable)
+	Else
+		return StorageUtil.GetIntValue(None, variable)
+	EndIf
+EndFunction
+
+; Return true if we want to enable the variable index.
+Bool Function DeclarativeMCM_ShouldEnable(Int index)
+	Int i = 0
+	Int count = StorageUtil.IntListCount(self, DeclarativeMCM_DependencyLHS)
+	While i < count
+		If StorageUtil.IntListGet(self, DeclarativeMCM_DependencyLHS, i) == index
+			Int otherIndex = StorageUtil.IntListGet(self, DeclarativeMCM_DependencyRHS, i)
+			Int verb = StorageUtil.IntListGet(self, DeclarativeMCM_DependencyType, i)
+			If verb == REQUIRES && !DeclarativeMCM_IsTruthy(otherIndex)
+				return false
+			ElseIf verb == CONFLICTS_WITH && DeclarativeMCM_IsTruthy(otherIndex)
+				return false
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	return true
+EndFunction
+
+Function DeclarativeMCM_SetEnabled(Int oidIndex, Bool enabled)
+	Int oid = StorageUtil.IntListGet(self, DeclarativeMCM_OIDList, oidIndex)
+	Int flags = StorageUtil.IntListGet(self, DeclarativeMCM_OIDFlags, oidIndex)
+	Int oldFlags = flags
+	If enabled
+		flags = Math.LogicalAnd(flags, Math.LogicalNot(OPTION_FLAG_DISABLED))
+	Else
+		flags = Math.LogicalOr(flags, OPTION_FLAG_DISABLED)
+	EndIf
+	If flags == oldFlags
+		return
+	EndIf
+	SetOptionFlags(oid, flags)
+EndFunction
+
+Function DeclarativeMCM_SetVariableEnabled(Int index, Bool enabled)
+	Int i = 0
+	Int count = StorageUtil.IntListCount(self, DeclarativeMCM_OIDsWithDependencies)
+	While i < count
+		Int oidIndex = StorageUtil.IntListGet(self, DeclarativeMCM_OIDsWithDependencies, i)
+		If StorageUtil.GetIntValue(self, DeclarativeMCM_OIDIndices, oidIndex) == index
+			DeclarativeMCM_SetEnabled(i, enabled)
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
+; Process all OIDs which should be en/disabled by this variable's value changing.
+Function DeclarativeMCM_ProcessTriggers(Int index)
+	If !StorageUtil.GetIntValue(self, DeclarativeMCM_HasDependent, index)
+		return
+	EndIf
+	Int i = 0
+	Int count = StorageUtil.IntListCount(self, DeclarativeMCM_DependencyRHS)
+	While i < count
+		If StorageUtil.IntListGet(self, DeclarativeMCM_DependencyRHS, i) == index
+			Int otherIndex = StorageUtil.IntListGet(self, DeclarativeMCM_DependencyLHS, i)
+			DeclarativeMCM_SetVariableEnabled(otherIndex, DeclarativeMCM_ShouldEnable(otherIndex))
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
+Function DeclarativeMCM_ProcessAllTriggers()
+	Int i = 0
+	Int count = StorageUtil.IntListCount(self, DeclarativeMCM_DependencyRHS)
+	While i < count
+		DeclarativeMCM_ProcessTriggers(StorageUtil.IntListGet(self, DeclarativeMCM_DependencyRHS, i))
+		i += 1
+	EndWhile
 EndFunction
 
 ; Resets a variable to its default value, which is then returned.
@@ -1167,6 +1339,9 @@ Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String inf
 		StorageUtil.StringListAdd(self, DeclarativeMCM_OIDInfos, info)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDTypes, typecode)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDOffsets, -1)
+	EndIf
+	If StorageUtil.IntListGet(self, DeclarativeMCM_IsDependent, index)
+		StorageUtil.IntListadd(self, DeclarativeMCM_OIDsWithDependencies, oidIndex, false)
 	EndIf
 	return result
 EndFunction
@@ -1268,9 +1443,14 @@ Function DeclarativeMCM_ClearVariables()
 	StorageUtil.FloatListClear(self, DeclarativeMCM_ExtraList)
 	StorageUtil.StringListClear(self, DeclarativeMCM_ExtraList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OffsetList)
+	StorageUtil.IntListClear(self, DeclarativeMCM_IsDependent)
+	StorageUtil.IntListClear(self, DeclarativeMCM_HasDependent)
 	StorageUtil.StringListClear(self, DeclarativeMCM_PageList)
 	StorageUtil.StringListClear(self, DeclarativeMCM_GlobalSyncList)
 	StorageUtil.FormListClear(self, DeclarativeMCM_GlobalSyncList)
+	StorageUtil.IntListClear(self, DeclarativeMCM_DependencyLHS)
+	StorageUtil.IntListClear(self, DeclarativeMCM_DependencyRHS)
+	StorageUtil.IntListClear(self, DeclarativeMCM_DependencyType)
 	StorageUtil.UnsetStringValue(self, DeclarativeMCM_LogoPath)
 	StorageUtil.UnsetFloatValue(self, DeclarativeMCM_LogoX)
 	StorageUtil.UnsetFloatValue(self, DeclarativeMCM_LogoY)
@@ -1286,6 +1466,7 @@ Function DeclarativeMCM_ClearOIDs()
 	StorageUtil.FloatListClear(self, DeclarativeMCM_OIDExtras)
 	StorageUtil.StringListClear(self, DeclarativeMCM_OIDExtras)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDOffsets)
+	StorageUtil.IntListClear(self, DeclarativeMCM_OIDsWithDependencies)
 EndFunction
 
 ; Turns a string into an index into the variable table.
@@ -1321,15 +1502,39 @@ EndFunction
 ; Return the index into the variable table for the named variable, or -1 if the
 ; variable doesn't exist or is a string (you can't put a string in a global).
 Int Function DeclarativeMCM_ValidateSyncToGlobal(String variable)
-	Int index = DeclarativeMCM_FindVariable(variable)
+	Int index = DeclarativeMCM_ValidateVariableExists(variable)
 	If index != -1 && StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) == TYPECODE_STRING
 		DeclarativeMCM_WarnCantSync(variable)
 		return -1
 	EndIf
+	return index
+EndFunction
+
+Int Function DeclarativeMCM_ValidateVariableExists(String variable)
+	Int index = DeclarativeMCM_FindVariable(variable)
 	If index == -1
 		DeclarativeMCM_WarnUndeclaredVariable(variable)
 	EndIf
 	return index
+EndFunction
+
+Bool Function DeclarativeMCM_ValidateDependency(Int leftIndex, Int verb, Int rightIndex)
+	If leftIndex == rightIndex
+		DeclarativeMCM_WarnCircularDependency(leftIndex)
+		return false
+	EndIf
+	Int i = 0
+	Int count = StorageUtil.IntListCount(self, DeclarativeMCM_DependencyLHS)
+	While i < count
+		If leftIndex == StorageUtil.IntListGet(self, DeclarativeMCM_DependencyLHS, i) && rightIndex == StorageUtil.IntListGet(self, DeclarativeMCM_DependencyRHS, i)
+			If StorageUtil.IntListGet(self, DeclarativeMCM_DependencyType, i) != verb
+				DeclarativeMCM_WarnIncompatibleDependency(leftIndex, rightIndex)
+			EndIf
+			return false
+		EndIf
+		i += 1
+	EndWhile
+	return true
 EndFunction
 
 ; Various error messages, which can be silenced by making LocalDevelopment()
@@ -1338,6 +1543,21 @@ EndFunction
 Function DeclarativeMCM_WarnBadDeclaration(String variable)
 	If LocalDevelopment()
 		Debug.MessageBox("Warning: Multiple incompatible declarations of variable: " + variable)
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnIncompatibleDependency(Int leftIndex, Int rightIndex)
+	If LocalDevelopment()
+		String leftVariable = StorageUtil.GetStringValue(self, DeclarativeMCM_VariableList, leftIndex)
+		String rightVariable = StorageUtil.GetStringValue(self, DeclarativeMCM_VariableList, rightIndex)
+		Debug.MessageBox("Warning: Multiple incompatible dependencies between " + leftVariable + " and " + rightVariable)
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnCircularDependency(Int index)
+	If LocalDevelopment()
+		String variable = StorageUtil.GetStringValue(self, DeclarativeMCM_VariableList, index)
+		Debug.MessageBox("Warning: Variable " + variable + " cannot depend on itself.")
 	EndIf
 EndFunction
 
@@ -1367,7 +1587,7 @@ EndFunction
 
 Function DeclarativeMCM_WarnUndeclaredVariable(String variable)
 	If LocalDevelopment()
-		Debug.MessageBox("Warning: Can't sync undeclared variable: " + variable)
+		Debug.MessageBox("Warning: Variable not declared: " + variable)
 	EndIf
 EndFunction
 
