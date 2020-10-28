@@ -213,7 +213,7 @@ Int Function MakeCheckbox(String variable, String label, String extraInfo, Int f
 		return -1
 	EndIf
 	Int oid = AddToggleOption(label, StorageUtil.GetIntValue(None, variable), flags)
-	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CHECKBOX, extraInfo)
+	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CHECKBOX, extraInfo, flags)
 	return oid
 EndFunction
 
@@ -226,7 +226,7 @@ Int Function MakeIntSlider(String variable, String label, Int min, Int max, Int 
 		return -1
 	EndIf
 	Int oid = AddSliderOption(label, StorageUtil.GetIntValue(None, variable), formatString, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_INT_SLIDER, extraInfo)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_INT_SLIDER, extraInfo, flags)
 	DeclarativeMCM_PushExtraInt(oidIndex, min, true)
 	DeclarativeMCM_PushExtraInt(oidIndex, max, true)
 	DeclarativeMCM_PushExtraInt(oidIndex, step, true)
@@ -243,7 +243,7 @@ Int Function MakeFloatSlider(String variable, String label, Float min, Float max
 		return -1
 	EndIf
 	Int oid = AddSliderOption(label, StorageUtil.GetFloatValue(None, variable), formatString, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLOAT_SLIDER, extraInfo)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLOAT_SLIDER, extraInfo, flags)
 	DeclarativeMCM_PushExtraFloat(oidIndex, min, true)
 	DeclarativeMCM_PushExtraFloat(oidIndex, max, true)
 	DeclarativeMCM_PushExtraFloat(oidIndex, step, true)
@@ -260,7 +260,7 @@ Int Function MakeTextBox(String variable, String label, String extraInfo, Int fl
 		return -1
 	EndIf
 	Int oid = AddInputOption(label, StorageUtil.GetStringValue(None, variable), flags)
-	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_TEXTBOX, extraInfo)
+	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_TEXTBOX, extraInfo, flags)
 	return oid
 EndFunction
 
@@ -280,7 +280,7 @@ Int Function MakeDropdown(String variable, String label, String[] choices, Strin
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	Int oid = AddMenuOption(label, choices[value], flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_DROPDOWN, extraInfo)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_DROPDOWN, extraInfo, flags)
 	Int i = 0
 	While i < size
 		DeclarativeMCM_PushExtraString(oidIndex, choices[i], true)
@@ -305,7 +305,7 @@ Int Function MakeCycler(String variable, String label, String[] choices, String 
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	Int oid = AddTextOption(label, choices[value], flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CYCLER, extraInfo)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CYCLER, extraInfo, flags)
 	Int i = 0
 	While i < size
 		DeclarativeMCM_PushExtraString(oidIndex, choices[i], true)
@@ -324,7 +324,7 @@ Int Function MakeColor(String variable, String label, String extraInfo, Int flag
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	Int oid = AddColorOption(label, value, flags)
-	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_COLOR, extraInfo)
+	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_COLOR, extraInfo, flags)
 	return oid
 EndFunction
 
@@ -341,7 +341,7 @@ Int Function MakeKeyMap(String variable, String label, String extraInfo, Int fla
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	Int oid = AddKeyMapOption(label, value, flags)
-	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_KEYMAP, extraInfo)
+	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_KEYMAP, extraInfo, flags)
 	return oid
 EndFunction
 
@@ -353,7 +353,7 @@ EndFunction
 ; empty string, in which case no message is displayed.
 Int Function MakeSaveButton(String path, String label, String buttonText, String extraInfo, String successMessage, String failureMessage, Int flags = 0)
 	Int oid = AddTextOption(label, buttonText, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE, extraInfo)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE, extraInfo, flags)
 	DeclarativeMCM_PushExtraString(oidIndex, path, true)
 	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
 	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
@@ -368,7 +368,7 @@ EndFunction
 ; empty string, in which case no message is displayed.
 Int Function MakeLoadButton(String path, String label, String buttonText, String extraInfo, String successMessage, String failureMessage, Int flags = 0)
 	Int oid = AddTextOption(label, buttonText, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_LOAD, extraInfo)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_LOAD, extraInfo, flags)
 	DeclarativeMCM_PushExtraString(oidIndex, path, true)
 	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
 	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
@@ -404,7 +404,7 @@ Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool
 	While i < 32
 		If labels[i]
 			Int oid = AddToggleOption(labels[i], Math.LogicalAnd(value, mask), flags)
-			Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_MASK, extraInfo)
+			Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_MASK, extraInfo, flags)
 			DeclarativeMCM_PushExtraInt(oidIndex, mask, true)
 			StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
 		EndIf
@@ -435,7 +435,7 @@ EndFunction
 ; Validate() will not be called.
 Int Function MakeResetButton(String label, String buttonText, String extraInfo, String confirmationMessage, Int flags = 0)
 	Int oid = AddTextOption(label, buttonText, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_RESET, extraInfo)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_RESET, extraInfo, flags)
 	DeclarativeMCM_PushExtraString(oidIndex, confirmationMessage, true)
 EndFunction
 
@@ -460,7 +460,7 @@ Int[] Function MakeRadioButtons(String variable, String[] labels, String extraIn
 	While i < labels.length
 		If labels[i]
 			Int oid = AddToggleOption(labels[i], i == value, flags)
-			Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_RADIO, extraInfo)
+			Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_RADIO, extraInfo, flags)
 			DeclarativeMCM_PushExtraInt(oidIndex, i, true)
 			StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
 		EndIf
@@ -1074,6 +1074,8 @@ String Property DeclarativeMCM_OIDTypes = "DeclarativeMCM:OIDTypes" autoreadonly
 String Property DeclarativeMCM_OIDOffsets = "DeclarativeMCM:OIDOffsets" autoreadonly
 ; The string to show on hover.
 String Property DeclarativeMCM_OIDInfos = "DeclarativeMCM:OIDInfos" autoreadonly
+; The current set of flags.
+String Property DeclarativeMCM_OIDFlags = "DeclarativeMCM:OIDFlags" autoreadonly
 ; Three lists of "extra data" associated with an OID.
 String Property DeclarativeMCM_OIDExtras = "DeclarativeMCM:OIDExtras" autoreadonly
 
@@ -1144,13 +1146,14 @@ String Function DeclarativeMCM_ResetStringVariable(Int index, String variable)
 EndFunction
 
 ; Save an OID. Returns the index into the OID table.
-Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String info)
+Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String info, Int flags)
 	Int result
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex != -1
 		result = oidIndex
 		; OIDList already has the correct value.
 		StorageUtil.IntListSet(self, DeclarativeMCM_OIDIndices, oidIndex, index)
+		StorageUtil.IntListSet(self, DeclarativeMCM_OIDFlags, oidIndex, flags)
 		StorageUtil.StringListSet(self, DeclarativeMCM_OIDInfos, oidIndex, info)
 		StorageUtil.IntListSet(self, DeclarativeMCM_OIDTypes, oidIndex, typecode)
 		; Leak(!) the existing extra values for correctness.
@@ -1160,6 +1163,7 @@ Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String inf
 	Else
 		result = StorageUtil.IntListAdd(self, DeclarativeMCM_OIDList, oid)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDIndices, index)
+		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDFlags, flags)
 		StorageUtil.StringListAdd(self, DeclarativeMCM_OIDInfos, info)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDTypes, typecode)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDOffsets, -1)
@@ -1276,6 +1280,7 @@ EndFunction
 Function DeclarativeMCM_ClearOIDs()
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDIndices)
+	StorageUtil.IntListClear(self, DeclarativeMCM_OIDFlags)
 	StorageUtil.StringListClear(self, DeclarativeMCM_OIDInfos)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDExtras)
 	StorageUtil.FloatListClear(self, DeclarativeMCM_OIDExtras)
