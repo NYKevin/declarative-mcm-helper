@@ -38,6 +38,12 @@ Bool Function Validate(String variable)
 	return True
 EndFunction
 
+; Called after the player activates a load or reset button, and all variables
+; have been loaded or reset. You can't reject these operations, but you can do
+; other things in response to them.
+Function ValidateAll()
+EndFunction
+
 ; Called when a key remapping conflicts with an existing key mapping.
 ; Return true if the key should be remapped anyway. Override if your users don't
 ; speak English.
@@ -177,7 +183,7 @@ EndFunction
 ; with the current value of variable. Syncing is strictly one-way; changes to
 ; dest will not be reflected in StorageUtil.
 Function SyncToGlobal(String variable, GlobalVariable dest)
-	Int index = DeclarativeMCM_ValidateSyncToGlobal(variable)
+	Int index = DeclarativeMCM_ValidateSyncToGlobal(variable, dest)
 	If index == -1
 		return
 	EndIf
@@ -191,6 +197,7 @@ Function SyncToGlobal(String variable, GlobalVariable dest)
 	EndWhile
 	StorageUtil.IntListAdd(self, DeclarativeMCM_GlobalSyncList, index)
 	StorageUtil.FormListAdd(self, DeclarativeMCM_GlobalSyncList, dest)
+	StorageUtil.IntListSet(self, DeclarativeMCM_IsSynced, index, 1)
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	If typecode == TYPECODE_FLOAT
 		dest.SetValue(StorageUtil.GetFloatValue(None, variable))
@@ -242,6 +249,7 @@ Int Function MakeCheckbox(String variable, String label, String extraInfo, Int f
 	If index == -1
 		return -1
 	EndIf
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddToggleOption(label, StorageUtil.GetIntValue(None, variable), flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CHECKBOX, extraInfo, flags)
 	return oid
@@ -255,6 +263,7 @@ Int Function MakeIntSlider(String variable, String label, Int min, Int max, Int 
 	If index == -1
 		return -1
 	EndIf
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddSliderOption(label, StorageUtil.GetIntValue(None, variable), formatString, flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_INT_SLIDER, extraInfo, flags)
 	DeclarativeMCM_PushExtraInt(oidIndex, min, true)
@@ -272,6 +281,7 @@ Int Function MakeFloatSlider(String variable, String label, Float min, Float max
 	If index == -1
 		return -1
 	EndIf
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddSliderOption(label, StorageUtil.GetFloatValue(None, variable), formatString, flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLOAT_SLIDER, extraInfo, flags)
 	DeclarativeMCM_PushExtraFloat(oidIndex, min, true)
@@ -289,6 +299,7 @@ Int Function MakeTextBox(String variable, String label, String extraInfo, Int fl
 	If index == -1
 		return -1
 	EndIf
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddInputOption(label, StorageUtil.GetStringValue(None, variable), flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_TEXTBOX, extraInfo, flags)
 	return oid
@@ -309,6 +320,7 @@ Int Function MakeDropdown(String variable, String label, String[] choices, Strin
 		return -1
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddMenuOption(label, choices[value], flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_DROPDOWN, extraInfo, flags)
 	Int i = 0
@@ -334,6 +346,7 @@ Int Function MakeCycler(String variable, String label, String[] choices, String 
 		return -1
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddTextOption(label, choices[value], flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CYCLER, extraInfo, flags)
 	Int i = 0
@@ -353,6 +366,7 @@ Int Function MakeColor(String variable, String label, String extraInfo, Int flag
 		return -1
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddColorOption(label, value, flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_COLOR, extraInfo, flags)
 	return oid
@@ -370,6 +384,7 @@ Int Function MakeKeyMap(String variable, String label, String extraInfo, Int fla
 		return -1
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddKeyMapOption(label, value, flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_KEYMAP, extraInfo, flags)
 	return oid
@@ -430,6 +445,7 @@ Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool
 	Else
 		mask = 1
 	EndIf
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
 	While i < 32
 		If labels[i]
@@ -484,6 +500,7 @@ Int[] Function MakeRadioButtons(String variable, String[] labels, String extraIn
 		DeclarativeMCM_WarnEnumMismatchedSize(variable)
 		return None
 	EndIf
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int i = 0
 	Int value = StorageUtil.GetIntValue(None, variable)
 	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
@@ -581,29 +598,10 @@ Event OnPageReset(String page)
 	EndIf
 	DeclarativeMCM_ClearOIDs()
 	MakeUserInterface(page)
-	DeclarativeMCM_ProcessAllTriggers()
 EndEvent
 
 Event OnConfigClose()
 	DeclarativeMCM_ClearOIDs()
-	Int i = 0
-	Int len = StorageUtil.IntListCount(self, DeclarativeMCM_GlobalSyncList)
-	While i < len
-		Int index = StorageUtil.IntListGet(self, DeclarativeMCM_GlobalSyncList, i)
-		GlobalVariable dest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, i) as GlobalVariable
-		String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-		Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
-		If dest
-			If typecode == TYPECODE_FLOAT
-				Float value = StorageUtil.GetFloatValue(None, variable)
-				dest.SetValue(value)
-			Else
-				Int value = StorageUtil.GetIntValue(None, variable)
-				dest.SetValue(value as Float)
-			EndIf
-		EndIf
-		i += 1
-	EndWhile
 EndEvent
 
 Event OnOptionSelect(Int oid)
@@ -625,7 +623,7 @@ Event OnOptionSelect(Int oid)
 			StorageUtil.SetIntValue(None, variable, (!value) as Int)
 			return
 		EndIf
-		DeclarativeMCM_ProcessTriggers(index)
+		DeclarativeMCM_ProcessTriggers(index, true)
 		SetToggleOptionValue(oid, value)
 	ElseIf oidType == OID_TYPE_CYCLER
 		Int value = StorageUtil.GetIntValue(None, variable)
@@ -639,9 +637,7 @@ Event OnOptionSelect(Int oid)
 			StorageUtil.SetIntValue(None, variable, value)
 			return
 		EndIf
-		If value == 0 || value == 1
-			DeclarativeMCM_ProcessTriggers(index)
-		EndIf
+		DeclarativeMCM_ProcessTriggers(index, value == 0 || value == 1)
 		SetTextOptionValue(oid, DeclarativeMCM_GetExtraString(oidIndex, value, true))
 	ElseIf oidType == OID_TYPE_SAVE
 		String path = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
@@ -681,6 +677,7 @@ Event OnOptionSelect(Int oid)
 		If successMessage
 			ShowMessage(successMessage, false)
 		EndIf
+		DeclarativeMCM_ProcessAllTriggers()
 		ForcePageReset()
 	ElseIf oidType == OID_TYPE_MASK
 		Int oldValue = StorageUtil.GetIntValue(None, variable)
@@ -691,9 +688,7 @@ Event OnOptionSelect(Int oid)
 			StorageUtil.SetIntValue(None, variable, oldValue)
 			return
 		EndIf
-		If (value as Bool) != (oldValue as Bool)
-			DeclarativeMCM_ProcessTriggers(index)
-		EndIf
+		DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
 		SetToggleOptionValue(oid, Math.LogicalAnd(value, mask))
 	ElseIf oidType == OID_TYPE_RESET
 		String confirmationMessage = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
@@ -714,6 +709,7 @@ Event OnOptionSelect(Int oid)
 			EndIf
 			i += 1
 		EndWhile
+		DeclarativeMCM_ProcessAllTriggers()
 		ForcePageReset()
 	ElseIf oidType == OID_TYPE_RADIO
 		Int oldValue = StorageUtil.GetIntValue(None, variable)
@@ -727,9 +723,7 @@ Event OnOptionSelect(Int oid)
 			StorageUtil.SetIntValue(None, variable, oldValue)
 			return
 		EndIf
-		If (value as Bool) != (oldValue as Bool)
-			DeclarativeMCM_ProcessTriggers(index)
-		EndIf
+		DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
 		SetToggleOptionValue(oid, true)
 		Int i = 0
 		Int count = StorageUtil.IntListCount(self, DeclarativeMCM_OIDList)
@@ -789,9 +783,7 @@ Event OnOptionSliderAccept(Int oid, Float value)
 			StorageUtil.SetIntValue(None, variable, oldValue)
 			return
 		EndIf
-		If ((value as Int) as Bool) != (oldValue as Bool)
-			DeclarativeMCM_ProcessTriggers(index)
-		EndIf
+		DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
 	ElseIf oidType == OID_TYPE_FLOAT_SLIDER
 		Float oldValue = StorageUtil.GetFloatValue(None, variable)
 		StorageUtil.SetFloatValue(None, variable, value)
@@ -799,9 +791,7 @@ Event OnOptionSliderAccept(Int oid, Float value)
 			StorageUtil.SetFloatValue(None, variable, oldValue)
 			return
 		EndIf
-		If (value as Bool) != (oldValue as Bool)
-			DeclarativeMCM_ProcessTriggers(index)
-		EndIf
+		DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
 	EndIf
 	String formatString = DeclarativeMCM_GetExtraString(oidIndex, 3, true)
 	SetSliderOptionValue(oid, value, formatString)
@@ -830,9 +820,7 @@ Event OnOptionInputAccept(Int oid, String value)
 		StorageUtil.SetStringValue(None, variable, oldValue)
 		return
 	EndIf
-	If (value as Bool) != (oldValue as Bool)
-		DeclarativeMCM_ProcessTriggers(index)
-	EndIf
+	DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
 	SetInputOptionValue(oid, value)
 EndEvent
 
@@ -872,9 +860,7 @@ Event OnOptionMenuAccept(Int oid, Int value)
 		StorageUtil.SetIntValue(None, variable, oldValue)
 		return
 	EndIf
-	If (value as Bool) != (oldValue as Bool)
-		DeclarativeMCM_ProcessTriggers(index)
-	EndIf
+	DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
 	String choice = DeclarativeMCM_GetExtraString(oidIndex, value, true)
 	SetMenuOptionValue(oid, choice)
 EndEvent
@@ -905,9 +891,7 @@ Event OnOptionColorAccept(Int oid, Int value)
 		StorageUtil.SetIntValue(None, variable, oldValue)
 		return
 	EndIf
-	If (value as Bool) != (oldValue as Bool)
-		DeclarativeMCM_ProcessTriggers(index)
-	EndIf
+	DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
 	SetColorOptionValue(oid, value)
 EndEvent
 
@@ -936,9 +920,7 @@ Event OnOptionKeyMapChange(Int oid, Int value, String conflictControl, String co
 			RegisterForKey(value)
 		EndIf
 	EndIf
-	If (value as Bool) != (oldValue as Bool)
-		DeclarativeMCM_ProcessTriggers(index)
-	EndIf
+	DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
 	SetKeyMapOptionValue(oid, value)
 EndEvent
 
@@ -989,9 +971,7 @@ Event OnOptionDefault(Int oid)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
 			return
 		EndIf
-		If (newValue as Bool) != (iOldValue as Bool)
-			DeclarativeMCM_ProcessTriggers(index)
-		EndIf
+		DeclarativeMCM_ProcessTriggers(index, (newValue as Bool) != (iOldValue as Bool))
 		SetToggleOptionValue(oid, maskedDefault)
 		return
 	; For all other cases, retrieve the default and the current (old) value,
@@ -1007,9 +987,7 @@ Event OnOptionDefault(Int oid)
 			StorageUtil.SetFloatValue(None, variable, fOldValue)
 			return
 		EndIf
-		If (fOldValue as Bool) != (fDefault as Bool)
-			DeclarativeMCM_ProcessTriggers(index)
-		EndIf
+		DeclarativeMCM_ProcessTriggers(index, (fOldValue as Bool) != (fDefault as Bool))
 	ElseIf typecode == TYPECODE_STRING
 		sOldValue = StorageUtil.GetStringValue(None, variable)
 		sDefault = DeclarativeMCM_ResetStringVariable(index, variable)
@@ -1020,9 +998,7 @@ Event OnOptionDefault(Int oid)
 			StorageUtil.SetStringValue(None, variable, sOldValue)
 			return
 		EndIf
-		If (sOldValue as Bool) != (sDefault as Bool)
-			DeclarativeMCM_ProcessTriggers(index)
-		EndIf
+		DeclarativeMCM_ProcessTriggers(index, (sOldValue as Bool) != (sDefault as Bool))
 	Else
 		iOldValue = StorageUtil.GetIntValue(None, variable)
 		iDefault = DeclarativeMCM_ResetIntVariable(index, variable)
@@ -1033,9 +1009,7 @@ Event OnOptionDefault(Int oid)
 			StorageUtil.SetIntValue(None, variable, iOldValue)
 			return
 		EndIf
-		If (iOldValue as Bool) != (iDefault as Bool)
-			DeclarativeMCM_ProcessTriggers(index)
-		EndIf
+		DeclarativeMCM_ProcessTriggers(index, (iOldValue as Bool) != (iDefault as Bool))
 	EndIf
 	; Finally, now that we know we've definitely changed the value, it's time to
 	; make the UI match.
@@ -1133,6 +1107,8 @@ String Property DeclarativeMCM_ExtraList = "DeclarativeMCM:ExtraList" autoreadon
 String Property DeclarativeMCM_IsDependent = "DeclarativeMCM:IsDependent" autoreadonly
 ; Truthy if this variable is the RHS of a dependency
 String Property DeclarativeMCM_HasDependent = "DeclarativeMCM:HasDependent" autoreadonly
+; Truthy if this variable will be sync'd to a GlobalVariable
+String Property DeclarativeMCM_IsSynced = "DeclarativeMCM:IsSynced" autoreadonly
 
 ; Other stuff that also gets set up by DeclareVariables()
 ; The list of pages that we will create.
@@ -1180,6 +1156,7 @@ Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_OffsetList, -1)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_IsDependent, 0)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_HasDependent, 0)
+	StorageUtil.IntListAdd(self, DeclarativeMCM_IsSynced, 0)
 	return result
 EndFunction
 
@@ -1246,6 +1223,18 @@ Bool Function DeclarativeMCM_ShouldEnable(Int index)
 	return true
 EndFunction
 
+Int Function DeclarativeMCM_AdjustFlags(Int index, Int flags)
+	If !StorageUtil.IntListGet(self, DeclarativeMCM_IsDependent, index)
+		return flags
+	EndIf
+	If DeclarativeMCM_ShouldEnable(index)
+		flags = Math.LogicalAnd(flags, Math.LogicalNot(OPTION_FLAG_DISABLED))
+	Else
+		flags = Math.LogicalOr(flags, OPTION_FLAG_DISABLED)
+	EndIf
+	return flags
+EndFunction
+
 Function DeclarativeMCM_SetEnabled(Int oidIndex, Bool enabled)
 	Int oid = StorageUtil.IntListGet(self, DeclarativeMCM_OIDList, oidIndex)
 	Int flags = StorageUtil.IntListGet(self, DeclarativeMCM_OIDFlags, oidIndex)
@@ -1273,9 +1262,13 @@ Function DeclarativeMCM_SetVariableEnabled(Int index, Bool enabled)
 	EndWhile
 EndFunction
 
-; Process all OIDs which should be en/disabled by this variable's value changing.
-Function DeclarativeMCM_ProcessTriggers(Int index)
-	If !StorageUtil.GetIntValue(self, DeclarativeMCM_HasDependent, index)
+; Notify syncing and dependencies that the variable has changed.
+; statusChanged: Whether the variable changed from falsey to truthy or vice-versa.
+Function DeclarativeMCM_ProcessTriggers(Int index, Bool statusChanged)
+	If StorageUtil.GetIntValue(self, DeclarativeMCM_IsSynced, index)
+		DeclarativeMCM_SyncVariable(index)
+	EndIf
+	If !statusChanged || !StorageUtil.GetIntValue(self, DeclarativeMCM_HasDependent, index)
 		return
 	EndIf
 	Int i = 0
@@ -1289,13 +1282,38 @@ Function DeclarativeMCM_ProcessTriggers(Int index)
 	EndWhile
 EndFunction
 
+; Sync variable to its owning global.
+Function DeclarativeMCM_SyncVariable(Int index)
+	Int i = 0
+	Int len = StorageUtil.IntListCount(self, DeclarativeMCM_GlobalSyncList)
+	While i < len
+		If index == StorageUtil.IntListGet(self, DeclarativeMCM_GlobalSyncList, i)
+			GlobalVariable dest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, i) as GlobalVariable
+			String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+			Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+			If dest
+				If typecode == TYPECODE_FLOAT
+					Float value = StorageUtil.GetFloatValue(None, variable)
+					dest.SetValue(value)
+				Else
+					Int value = StorageUtil.GetIntValue(None, variable)
+					dest.SetValue(value as Float)
+				EndIf
+			EndIf
+			return
+		EndIf
+		i += 1
+	EndWhile
+EndFunction
+
 Function DeclarativeMCM_ProcessAllTriggers()
 	Int i = 0
 	Int count = StorageUtil.IntListCount(self, DeclarativeMCM_DependencyRHS)
 	While i < count
-		DeclarativeMCM_ProcessTriggers(StorageUtil.IntListGet(self, DeclarativeMCM_DependencyRHS, i))
+		DeclarativeMCM_ProcessTriggers(StorageUtil.IntListGet(self, DeclarativeMCM_DependencyRHS, i), false)
 		i += 1
 	EndWhile
+	ValidateAll()
 EndFunction
 
 ; Resets a variable to its default value, which is then returned.
@@ -1445,6 +1463,7 @@ Function DeclarativeMCM_ClearVariables()
 	StorageUtil.IntListClear(self, DeclarativeMCM_OffsetList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_IsDependent)
 	StorageUtil.IntListClear(self, DeclarativeMCM_HasDependent)
+	StorageUtil.IntListClear(self, DeclarativeMCM_IsSynced)
 	StorageUtil.StringListClear(self, DeclarativeMCM_PageList)
 	StorageUtil.StringListClear(self, DeclarativeMCM_GlobalSyncList)
 	StorageUtil.FormListClear(self, DeclarativeMCM_GlobalSyncList)
@@ -1501,11 +1520,20 @@ EndFunction
 
 ; Return the index into the variable table for the named variable, or -1 if the
 ; variable doesn't exist or is a string (you can't put a string in a global).
-Int Function DeclarativeMCM_ValidateSyncToGlobal(String variable)
+Int Function DeclarativeMCM_ValidateSyncToGlobal(String variable, GlobalVariable dest)
 	Int index = DeclarativeMCM_ValidateVariableExists(variable)
-	If index != -1 && StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) == TYPECODE_STRING
-		DeclarativeMCM_WarnCantSync(variable)
-		return -1
+	If index != -1
+		If StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) == TYPECODE_STRING
+			DeclarativeMCM_WarnCantSync(variable)
+			return -1
+		ElseIf StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
+			Int syncIndex = StorageUtil.IntListFind(self, DeclarativeMCM_GlobalSyncList, index)
+			GlobalVariable originalDest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, syncIndex) as GlobalVariable
+			If originalDest != dest
+				DeclarativeMCM_WarnMultipleSync(variable)
+			EndIf
+			return -1
+		EndIf
 	EndIf
 	return index
 EndFunction
@@ -1582,6 +1610,12 @@ EndFunction
 Function DeclarativeMCM_WarnCantSync(String variable)
 	If LocalDevelopment()
 		Debug.MessageBox("Warning: Can't sync string variable " + variable + " to a global.")
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnMultipleSync(String variable)
+	If LocalDevelopment()
+		Debug.MessageBox("Warning: Can't sync variable " + variable + " to more than one global.")
 	EndIf
 EndFunction
 
