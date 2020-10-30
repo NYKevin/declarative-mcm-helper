@@ -449,9 +449,7 @@ Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool
 	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
 	While i < 32
 		If labels[i]
-			Int oid = AddToggleOption(labels[i], Math.LogicalAnd(value, mask), flags)
-			Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_MASK, extraInfo, flags)
-			DeclarativeMCM_PushExtraInt(oidIndex, mask, true)
+			Int oid = DeclarativeMCM_MakeSingleBitMask(index, mask, value, labels[i], extraInfo, flags)
 			StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
 		EndIf
 		i += 1
@@ -473,6 +471,24 @@ Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool
 	Int[] result = StorageUtil.IntListToArray(self, DeclarativeMCM_Scratch)
 	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
 	return result
+EndFunction
+
+; Create a single checkbox to control an individual bit of an integer.
+; bit should be a value from 0 to 31 inclusive. 0 means the least-significant
+; bit, and 31 is the most-significant bit.
+Int Function MakeSingleBitMask(String variable, Int bit, String label, String extraInfo, Int flags = 0)
+	DeclareInt(variable)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT)
+	If index == -1
+		return -1
+	EndIf
+	If bit < 0 || bit > 31
+		DeclarativeMCM_WarnMaskOverflow(variable, bit)
+	EndIf
+	Int value = StorageUtil.GetIntValue(None, variable)
+	Int mask = Math.LeftShift(1, bit)
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
+	return DeclarativeMCM_MakeSingleBitMask(index, mask, value, label, extraInfo, flags)
 EndFunction
 
 ; Create a text option that, when clicked, resets all variables to their default
@@ -1335,6 +1351,13 @@ String Function DeclarativeMCM_ResetStringVariable(Int index, String variable)
 	return default
 EndFunction
 
+Int Function DeclarativeMCM_MakeSingleBitMask(Int index, Int mask, Int value, String label, String extraInfo, Int flags)
+	Int oid = AddToggleOption(label, Math.LogicalAnd(value, mask), flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_MASK, extraInfo, flags)
+	DeclarativeMCM_PushExtraInt(oidIndex, mask, true)
+	return oid
+EndFunction
+
 ; Save an OID. Returns the index into the OID table.
 Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String info, Int flags)
 	Int result
@@ -1586,6 +1609,12 @@ Function DeclarativeMCM_WarnCircularDependency(Int index)
 	If LocalDevelopment()
 		String variable = StorageUtil.GetStringValue(self, DeclarativeMCM_VariableList, index)
 		Debug.MessageBox("Warning: Variable " + variable + " cannot depend on itself.")
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnMaskOverflow(String variable, Int bit)
+	If LocalDevelopment()
+		ShowMessage("Warning: Tried to make a mask for bit " + bit + " of " + variable + ", but it only has 32 bits (numbered from 0 to 31).")
 	EndIf
 EndFunction
 
