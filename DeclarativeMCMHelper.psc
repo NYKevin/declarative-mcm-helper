@@ -555,6 +555,18 @@ Int Function MakeSingleRadioButton(String variable, Int choice, String label, St
 	return DeclarativeMCM_MakeSingleRadioButton(index, choice, choice == value, label, extraInfo, flags)
 EndFunction
 
+; Attach hover text to a custom control. Intended for cases where you create a
+; UI control directly with MCM functions; doesn't work if the control was
+; created with one of the MakeFoo() methods above, or if you call
+; MakeHoverText() multiple times on the same control.
+Function MakeHoverText(Int oid, String extraInfo)
+	If StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid) != -1
+		DeclarativeMCM_WarnMultipleHoverText()
+		return
+	EndIf
+	DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_EXTERNAL, extraInfo, 0)
+EndFunction
+
 ; MCM overrides:
 ; WARNING: If you are going to override any of these functions, you should call
 ; Parent.Function() (e.g. Parent.OnConfigInit(), Parent.OnVersionUpdate(), etc.)
@@ -647,6 +659,9 @@ Event OnOptionSelect(Int oid)
 		return
 	EndIf
 	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
+		return
+	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable
 	If index != -1
@@ -780,6 +795,9 @@ Event OnOptionSliderOpen(Int oid)
 		return
 	EndIf
 	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
+		return
+	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	If oidType == OID_TYPE_INT_SLIDER
@@ -811,6 +829,9 @@ Event OnOptionSliderAccept(Int oid, Float value)
 		return
 	EndIf
 	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
+		return
+	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	If oidType == OID_TYPE_INT_SLIDER
@@ -839,6 +860,10 @@ Event OnOptionInputOpen(Int oid)
 	If oidIndex == -1
 		return
 	EndIf
+	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
+		return
+	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	SetInputDialogStartText(StorageUtil.GetStringValue(None, variable))
@@ -847,6 +872,10 @@ EndEvent
 Event OnOptionInputAccept(Int oid, String value)
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex == -1
+		return
+	EndIf
+	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
 		return
 	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
@@ -864,6 +893,10 @@ EndEvent
 Event OnOptionMenuOpen(Int oid)
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex == -1
+		return
+	EndIf
+	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
 		return
 	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
@@ -889,6 +922,10 @@ Event OnOptionMenuAccept(Int oid, Int value)
 	If oidIndex == -1
 		return
 	EndIf
+	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
+		return
+	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	Int oldValue = StorageUtil.GetIntValue(None, variable)
@@ -907,6 +944,10 @@ Event OnOptionColorOpen(Int oid)
 	If oidIndex == -1
 		return
 	EndIf
+	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
+		return
+	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	Int value = StorageUtil.GetIntValue(None, variable)
@@ -918,6 +959,10 @@ EndEvent
 Event OnOptionColorAccept(Int oid, Int value)
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex == -1
+		return
+	EndIf
+	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
 		return
 	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
@@ -935,6 +980,10 @@ EndEvent
 Event OnOptionKeyMapChange(Int oid, Int value, String conflictControl, String conflictMod)
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex == -1
+		return
+	EndIf
+	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
 		return
 	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
@@ -979,12 +1028,15 @@ Event OnOptionDefault(Int oid)
 	If oidIndex == -1
 		return
 	EndIf
+	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	If oidType == OID_TYPE_EXTERNAL
+		return
+	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	If index == -1
 		; Save/load/reset buttons, and other controls with no variable.
 		return
 	EndIf
-	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	Float fDefault
@@ -1129,6 +1181,7 @@ Int Property OID_TYPE_LOAD = 9 autoreadonly
 Int Property OID_TYPE_MASK = 10 autoreadonly
 Int Property OID_TYPE_RESET = 11 autoreadonly
 Int Property OID_TYPE_RADIO = 12 autoreadonly
+Int Property OID_TYPE_EXTERNAL = 13 autoreadonly
 
 ; The internal variable table. Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.
@@ -1692,6 +1745,12 @@ EndFunction
 Function DeclarativeMCM_WarnMultipleSync(String variable)
 	If LocalDevelopment()
 		Debug.MessageBox("Warning: Can't sync variable " + variable + " to more than one global.")
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnMultipleHoverText()
+	If LocalDevelopment()
+		ShowMessage("Warning: Tried to attach hover text to option which already has it.")
 	EndIf
 EndFunction
 
