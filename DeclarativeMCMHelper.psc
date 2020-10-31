@@ -555,16 +555,15 @@ Int Function MakeSingleRadioButton(String variable, Int choice, String label, St
 	return DeclarativeMCM_MakeSingleRadioButton(index, choice, choice == value, label, extraInfo, flags)
 EndFunction
 
-; Attach hover text to a custom control. Intended for cases where you create a
-; UI control directly with MCM functions; doesn't work if the control was
-; created with one of the MakeFoo() methods above, or if you call
-; MakeHoverText() multiple times on the same control.
-Function MakeHoverText(Int oid, String extraInfo)
-	If StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid) != -1
-		DeclarativeMCM_WarnMultipleHoverText()
+; Set the hover text of oid. Works even if oid was created with a regular MCM
+; AddFooOption() function.
+Function SetHoverText(Int oid, String extraInfo)
+	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
+	If oidIndex == -1
+		DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_EXTERNAL, extraInfo, 0)
 		return
 	EndIf
-	DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_EXTERNAL, extraInfo, 0)
+	StorageUtil.StringListSet(self, DeclarativeMCM_OIDInfos, oidIndex, extraInfo)
 EndFunction
 
 ; MCM overrides:
