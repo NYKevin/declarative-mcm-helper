@@ -542,6 +542,10 @@ Int Function MakeSingleRadioButton(String variable, Int choice, String label, St
 	If index == -1
 		return -1
 	EndIf
+	If choice < 0
+		DeclarativeMCM_WarnChoiceNegative(variable, choice)
+		return -1
+	EndIf
 	Int size = DeclarativeMCM_GetExtraInt(index, 1)
 	If size <= choice
 		DeclarativeMCM_WarnEnumTooSmall(variable, choice)
@@ -1658,6 +1662,12 @@ EndFunction
 Function DeclarativeMCM_WarnEnumMismatchedSize(String variable)
 	If LocalDevelopment()
 		ShowMessage("Warning: Enum variable " + variable + " has a different size from the number of choices you specified.", false)
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnChoiceNegative(String variable, Int choice)
+	If LocalDevelopment()
+		ShowMessage("Warning: Tried to add a radio button for choice " + choice + " of enum variable " + variable + ", but negative numbers are not allowed.", false)
 	EndIf
 EndFunction
 
