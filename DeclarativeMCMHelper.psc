@@ -241,6 +241,10 @@ EndFunction
 ; it unless you want to fiddle with the option's flags later. If -1 is returned,
 ; it means something went wrong.
 
+; As a general rule: Do not create multiple controls for the same variable on
+; the same page, except for radio buttons and mask bits. Even then, each radio
+; button or mask bit should control a different choice or bit.
+
 ; Makes a checkbox for a boolean variable. label is shown inline, and
 ; extraInfo is shown on hover.
 Int Function MakeCheckbox(String variable, String label, String extraInfo, Int flags = 0)
