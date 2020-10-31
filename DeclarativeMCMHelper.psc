@@ -522,16 +522,29 @@ Int[] Function MakeRadioButtons(String variable, String[] labels, String extraIn
 	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
 	While i < labels.length
 		If labels[i]
-			Int oid = AddToggleOption(labels[i], i == value, flags)
-			Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_RADIO, extraInfo, flags)
-			DeclarativeMCM_PushExtraInt(oidIndex, i, true)
-			StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
+			Int oid = DeclarativeMCM_MakeSingleRadioButton(index, i, i == value, labels[i], extraInfo, flags)
 		EndIf
 		i += 1
 	EndWhile
 	Int[] result = StorageUtil.IntListToArray(self, DeclarativeMCM_Scratch)
 	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
 	return result
+EndFunction
+
+; Create a single radio button checkbox. choice is the value it will set when it
+; is checked.
+Int Function MakeSingleRadioButton(String variable, Int choice, String label, String extraInfo, Int flags = 0)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM, true)
+	If index == -1
+		return -1
+	EndIf
+	Int size = DeclarativeMCM_GetExtraInt(index, 1)
+	If size <= choice
+		DeclarativeMCM_WarnEnumTooSmall(variable, choice)
+	EndIf
+	Int value = StorageUtil.GetIntValue(None, variable)
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
+	return DeclarativeMCM_MakeSingleRadioButton(index, choice, choice == value, label, extraInfo, flags)
 EndFunction
 
 ; MCM overrides:
@@ -1358,6 +1371,14 @@ Int Function DeclarativeMCM_MakeSingleBitMask(Int index, Int mask, Int value, St
 	return oid
 EndFunction
 
+Int Function DeclarativeMCM_MakeSingleRadioButton(Int index, Int choice, Bool checked, String label, String extraInfo, Int flags)
+	Int oid = AddToggleOption(label, checked, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_RADIO, extraInfo, flags)
+	DeclarativeMCM_PushExtraInt(oidIndex, choice, true)
+	StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
+	return oid
+EndFunction
+
 ; Save an OID. Returns the index into the OID table.
 Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String info, Int flags)
 	Int result
@@ -1532,8 +1553,14 @@ EndFunction
 
 ; Return the index into the variable table for the named variable, or -1 if the
 ; variable is of the wrong type or doesn't exist.
-Int Function DeclarativeMCM_ValidateUI(String variable, Int typecode)
+Int Function DeclarativeMCM_ValidateUI(String variable, Int typecode, Bool warnUndeclared = false)
 	Int index = DeclarativeMCM_FindVariable(variable)
+	If index == -1
+		If warnUndeclared
+			DeclarativeMCM_WarnUndeclaredVariable(variable)
+		EndIf
+		return index
+	EndIf
 	If StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) != typecode
 		; Caller already tried to declare it, so fail silently.
 		return -1
@@ -1627,6 +1654,12 @@ EndFunction
 Function DeclarativeMCM_WarnEnumMismatchedSize(String variable)
 	If LocalDevelopment()
 		ShowMessage("Warning: Enum variable " + variable + " has a different size from the number of choices you specified.", false)
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnEnumTooSmall(String variable, Int choice)
+	If LocalDevelopment()
+		ShowMessage("Warning: Tried to add a radio button for choice " + choice + " of enum variable " + variable + ", but it does not have that many options.", false)
 	EndIf
 EndFunction
 
