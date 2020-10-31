@@ -1160,6 +1160,7 @@ EndFunction
 
 ; Private members, do not use directly:
 
+; Types for variables declared in DeclareVariables()
 Int Property TYPECODE_BOOL = 0 autoreadonly
 Int Property TYPECODE_INT = 1 autoreadonly
 Int Property TYPECODE_FLOAT = 2 autoreadonly
@@ -1167,6 +1168,7 @@ Int Property TYPECODE_STRING = 3 autoreadonly
 Int Property TYPECODE_ENUM = 4 autoreadonly
 Int Property TYPECODE_KEY = 5 autoreadonly
 
+; Types for OIDs created in MakeUserInterface()
 Int Property OID_TYPE_CHECKBOX = 0 autoreadonly
 Int Property OID_TYPE_INT_SLIDER = 1 autoreadonly
 Int Property OID_TYPE_FLOAT_SLIDER = 2 autoreadonly
@@ -1180,6 +1182,7 @@ Int Property OID_TYPE_LOAD = 9 autoreadonly
 Int Property OID_TYPE_MASK = 10 autoreadonly
 Int Property OID_TYPE_RESET = 11 autoreadonly
 Int Property OID_TYPE_RADIO = 12 autoreadonly
+; Used for SetHoverText() on a non-declarative OID.
 Int Property OID_TYPE_EXTERNAL = 13 autoreadonly
 
 ; The internal variable table. Cleared by OnVersionUpdate(), and
