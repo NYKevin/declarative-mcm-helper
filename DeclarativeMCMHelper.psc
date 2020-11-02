@@ -260,38 +260,49 @@ Int Function MakeCheckbox(String variable, String label, String extraInfo, Int f
 EndFunction
 
 ; Makes a slider for an integer variable. label is shown inline, and
-; extraInfo is shown on hover.
-Int Function MakeIntSlider(String variable, String label, Int min, Int max, Int step, String extraInfo, String formatString = "{0}", Int flags = 0)
+; extraInfo is shown on hover. If countSteps is true, then the value actually
+; stored will be equal to the number of steps above min, rather than the value
+; the user selected.
+Int Function MakeIntSlider(String variable, String label, Int min, Int max, Int step, String extraInfo, String formatString = "{0}", Bool countSteps = false, Int flags = 0)
 	DeclareInt(variable)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT)
 	If index == -1
 		return -1
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
-	Int oid = AddSliderOption(label, StorageUtil.GetIntValue(None, variable), formatString, flags)
+	Int value = StorageUtil.GetIntValue(None, variable)
+	If countSteps
+		value = min + step * value
+	EndIf
+	Int oid = AddSliderOption(label, value, formatString, flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_INT_SLIDER, extraInfo, flags)
 	DeclarativeMCM_PushExtraInt(oidIndex, min, true)
 	DeclarativeMCM_PushExtraInt(oidIndex, max, true)
 	DeclarativeMCM_PushExtraInt(oidIndex, step, true)
 	DeclarativeMCM_PushExtraString(oidIndex, formatString, true)
+	DeclarativeMCM_PushExtraInt(oidIndex, countSteps as Int, true)
 	return oid
 EndFunction
 
 ; Makes a slider for a float variable. label is shown inline, and
-; extraInfo is shown on hover.
-Int Function MakeFloatSlider(String variable, String label, Float min, Float max, Float step, String extraInfo, String formatString = "{0}", Int flags = 0)
+; extraInfo is shown on hover. If multiplier is not 1.0, then the display value
+; is multiplied by multiplier. For example, if min = 0.0, max = 1.0, and
+; multiplier = 100.0, then the user will be selecting a percentage from 0.0 to
+; 100.0, but the value stored will be between 0.0 and 1.0.
+Int Function MakeFloatSlider(String variable, String label, Float min, Float max, Float step, String extraInfo, String formatString = "{0}", Float multiplier = 1.0, Int flags = 0)
 	DeclareFloat(variable)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_FLOAT)
 	If index == -1
 		return -1
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
-	Int oid = AddSliderOption(label, StorageUtil.GetFloatValue(None, variable), formatString, flags)
+	Int oid = AddSliderOption(label, StorageUtil.GetFloatValue(None, variable) * multiplier, formatString, flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLOAT_SLIDER, extraInfo, flags)
 	DeclarativeMCM_PushExtraFloat(oidIndex, min, true)
 	DeclarativeMCM_PushExtraFloat(oidIndex, max, true)
 	DeclarativeMCM_PushExtraFloat(oidIndex, step, true)
 	DeclarativeMCM_PushExtraString(oidIndex, formatString, true)
+	DeclarativeMCM_PushExtraFloat(oidIndex, multiplier, true)
 	return oid
 EndFunction
 
@@ -804,7 +815,11 @@ Event OnOptionSliderOpen(Int oid)
 		Int min = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
 		Int max = DeclarativeMCM_GetExtraInt(oidIndex, 1, true)
 		Int step = DeclarativeMCM_GetExtraInt(oidIndex, 2, true)
+		Bool countSteps = DeclarativeMCM_GetExtraInt(oidIndex, 3, true)
 		Int current = StorageUtil.GetIntValue(None, variable)
+		If countSteps
+			current = min + current * step
+		EndIf
 		SetSliderDialogStartValue(current)
 		SetSliderDialogDefaultValue(default)
 		SetSliderDialogRange(min, max)
@@ -814,7 +829,9 @@ Event OnOptionSliderOpen(Int oid)
 		Float fMin = DeclarativeMCM_GetExtraFloat(oidIndex, 0, true)
 		Float fMax = DeclarativeMCM_GetExtraFloat(oidIndex, 1, true)
 		Float fStep = DeclarativeMCM_GetExtraFloat(oidIndex, 2, true)
+		Float multiplier = DeclarativeMCM_GetExtraFloat(oidIndex, 3, true)
 		Float fCurrent = StorageUtil.GetFloatValue(None, variable)
+		fCurrent *= multiplier
 		SetSliderDialogStartValue(fCurrent)
 		SetSliderDialogDefaultValue(fDefault)
 		SetSliderDialogRange(fMin, fMax)
@@ -834,14 +851,24 @@ Event OnOptionSliderAccept(Int oid, Float value)
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	If oidType == OID_TYPE_INT_SLIDER
+		Int iNewValue = value as Int
+		Bool countSteps = DeclarativeMCM_GetExtraInt(oidIndex, 3, true)
+		If countSteps
+			Int min = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
+			Int step = DeclarativeMCM_GetExtraInt(oidIndex, 2, true)
+			iNewValue -= min
+			iNewValue /= step
+		EndIf
 		Int oldValue = StorageUtil.GetIntValue(None, variable)
-		StorageUtil.SetIntValue(None, variable, value as Int)
+		StorageUtil.SetIntValue(None, variable, iNewValue)
 		If !validate(variable)
 			StorageUtil.SetIntValue(None, variable, oldValue)
 			return
 		EndIf
-		DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
+		DeclarativeMCM_ProcessTriggers(index, (iNewValue as Bool) != (oldValue as Bool))
 	ElseIf oidType == OID_TYPE_FLOAT_SLIDER
+		Float multiplier = DeclarativeMCM_GetExtraFloat(oidIndex, 3, true)
+		value /= multiplier
 		Float oldValue = StorageUtil.GetFloatValue(None, variable)
 		StorageUtil.SetFloatValue(None, variable, value)
 		If !validate(variable)
