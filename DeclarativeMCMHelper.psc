@@ -577,6 +577,37 @@ Function SetHoverText(Int oid, String extraInfo)
 	StorageUtil.StringListSet(self, DeclarativeMCM_OIDInfos, oidIndex, extraInfo)
 EndFunction
 
+; Utility functions you can call from anywhere:
+; These functions will not call ForcePageReset(); if that is necessary, you must
+; do it yourself.
+
+; Save data to an external file as if the user had pressed a save button.
+; Return true on success.
+Bool Function SaveAllVariables(String path)
+	Int i = 0
+	Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
+	While i < count
+		DeclarativeMCM_SaveVariable(path, i)
+		i += 1
+	EndWhile
+	Return JsonUtil.Save(path)
+EndFunction
+
+; Load data from an external file as if the user had pressed a load button.
+; Return true on success.
+Bool Function LoadAllVariables(String path)
+	If !JsonUtil.Load(path) || !JsonUtil.IsGood(path)
+		Return False
+	EndIf
+	Int i = 0
+	Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
+	While i < count
+		DeclarativeMCM_LoadVariable(path, i)
+		i += 1
+	EndWhile
+	DeclarativeMCM_ProcessAllTriggers()
+EndFunction
+
 ; MCM overrides:
 ; WARNING: If you are going to override any of these functions, you should call
 ; Parent.Function() (e.g. Parent.OnConfigInit(), Parent.OnVersionUpdate(), etc.)
@@ -703,13 +734,7 @@ Event OnOptionSelect(Int oid)
 		SetTextOptionValue(oid, DeclarativeMCM_GetExtraString(oidIndex, value, true))
 	ElseIf oidType == OID_TYPE_SAVE
 		String path = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
-		Int i = 0
-		Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
-		While i < count
-			DeclarativeMCM_SaveVariable(path, i)
-			i += 1
-		EndWhile
-		If JsonUtil.Save(path)
+		If SaveAllVariables(path)
 			String successMessage = DeclarativeMCM_GetExtraString(oidIndex, 1, true)
 			If successMessage
 				ShowMessage(successMessage, false)
@@ -722,25 +747,18 @@ Event OnOptionSelect(Int oid)
 		EndIf
 	ElseIf oidType == OID_TYPE_LOAD
 		String path = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
-		If !JsonUtil.Load(path) || !JsonUtil.IsGood(path)
+		If LoadAllVariables(path)
+			String successMessage = DeclarativeMCM_GetExtraString(oidIndex, 1, true)
+			If successMessage
+				ShowMessage(successMessage, false)
+			EndIf
+			ForcePageReset()
+		Else
 			String failureMessage = DeclarativeMCM_GetExtraString(oidIndex, 2, true)
 			If failureMessage
 				ShowMessage(failureMessage, false)
 			EndIf
-			return
 		EndIf
-		Int i = 0
-		Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
-		While i < count
-			DeclarativeMCM_LoadVariable(path, i)
-			i += 1
-		EndWhile
-		String successMessage = DeclarativeMCM_GetExtraString(oidIndex, 1, true)
-		If successMessage
-			ShowMessage(successMessage, false)
-		EndIf
-		DeclarativeMCM_ProcessAllTriggers()
-		ForcePageReset()
 	ElseIf oidType == OID_TYPE_MASK
 		Int oldValue = StorageUtil.GetIntValue(None, variable)
 		Int mask = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
