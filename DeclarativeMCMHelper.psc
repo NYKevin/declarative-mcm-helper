@@ -286,7 +286,7 @@ EndFunction
 
 ; Makes a slider for a float variable. label is shown inline, and
 ; extraInfo is shown on hover. If multiplier is not 1.0, then the display value
-; is multiplied by multiplier. For example, if min = 0.0, max = 1.0, and
+; is multiplied by multiplier. For example, if min = 0.0, max = 100.0, and
 ; multiplier = 100.0, then the user will be selecting a percentage from 0.0 to
 ; 100.0, but the value stored will be between 0.0 and 1.0.
 Int Function MakeFloatSlider(String variable, String label, Float min, Float max, Float step, String extraInfo, String formatString = "{0}", Float multiplier = 1.0, Int flags = 0)
@@ -886,14 +886,14 @@ Event OnOptionSliderAccept(Int oid, Float value)
 		DeclarativeMCM_ProcessTriggers(index, (iNewValue as Bool) != (oldValue as Bool))
 	ElseIf oidType == OID_TYPE_FLOAT_SLIDER
 		Float multiplier = DeclarativeMCM_GetExtraFloat(oidIndex, 3, true)
-		value /= multiplier
+		Float trueValue = value / multiplier
 		Float oldValue = StorageUtil.GetFloatValue(None, variable)
-		StorageUtil.SetFloatValue(None, variable, value)
+		StorageUtil.SetFloatValue(None, variable, trueValue)
 		If !validate(variable)
 			StorageUtil.SetFloatValue(None, variable, oldValue)
 			return
 		EndIf
-		DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
+		DeclarativeMCM_ProcessTriggers(index, (trueValue as Bool) != (oldValue as Bool))
 	EndIf
 	String formatString = DeclarativeMCM_GetExtraString(oidIndex, 3, true)
 	SetSliderOptionValue(oid, value, formatString)
