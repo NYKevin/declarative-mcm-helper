@@ -833,7 +833,7 @@ Event OnOptionSliderOpen(Int oid)
 		Int min = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
 		Int max = DeclarativeMCM_GetExtraInt(oidIndex, 1, true)
 		Int step = DeclarativeMCM_GetExtraInt(oidIndex, 2, true)
-		Bool countSteps = DeclarativeMCM_GetExtraInt(oidIndex, 3, true)
+		Bool countSteps = DeclarativeMCM_GetExtraInt(oidIndex, 4, true)
 		Int current = StorageUtil.GetIntValue(None, variable)
 		If countSteps
 			current = min + current * step
@@ -847,7 +847,7 @@ Event OnOptionSliderOpen(Int oid)
 		Float fMin = DeclarativeMCM_GetExtraFloat(oidIndex, 0, true)
 		Float fMax = DeclarativeMCM_GetExtraFloat(oidIndex, 1, true)
 		Float fStep = DeclarativeMCM_GetExtraFloat(oidIndex, 2, true)
-		Float multiplier = DeclarativeMCM_GetExtraFloat(oidIndex, 3, true)
+		Float multiplier = DeclarativeMCM_GetExtraFloat(oidIndex, 4, true)
 		Float fCurrent = StorageUtil.GetFloatValue(None, variable)
 		fCurrent *= multiplier
 		SetSliderDialogStartValue(fCurrent)
@@ -870,7 +870,7 @@ Event OnOptionSliderAccept(Int oid, Float value)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	If oidType == OID_TYPE_INT_SLIDER
 		Int iNewValue = value as Int
-		Bool countSteps = DeclarativeMCM_GetExtraInt(oidIndex, 3, true)
+		Bool countSteps = DeclarativeMCM_GetExtraInt(oidIndex, 4, true)
 		If countSteps
 			Int min = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
 			Int step = DeclarativeMCM_GetExtraInt(oidIndex, 2, true)
@@ -885,7 +885,7 @@ Event OnOptionSliderAccept(Int oid, Float value)
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (iNewValue as Bool) != (oldValue as Bool))
 	ElseIf oidType == OID_TYPE_FLOAT_SLIDER
-		Float multiplier = DeclarativeMCM_GetExtraFloat(oidIndex, 3, true)
+		Float multiplier = DeclarativeMCM_GetExtraFloat(oidIndex, 4, true)
 		Float trueValue = value / multiplier
 		Float oldValue = StorageUtil.GetFloatValue(None, variable)
 		StorageUtil.SetFloatValue(None, variable, trueValue)
