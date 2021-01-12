@@ -1495,20 +1495,20 @@ Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String inf
 		result = oidIndex
 		; OIDList already has the correct value.
 		StorageUtil.IntListSet(self, DeclarativeMCM_OIDIndices, oidIndex, index)
-		StorageUtil.IntListSet(self, DeclarativeMCM_OIDFlags, oidIndex, flags)
-		StorageUtil.StringListSet(self, DeclarativeMCM_OIDInfos, oidIndex, info)
 		StorageUtil.IntListSet(self, DeclarativeMCM_OIDTypes, oidIndex, typecode)
 		; Leak(!) the existing extra values for correctness.
 		; It won't leak all that much memory, and OnPageReset()/OnConfigClose()
 		; cleans it up anyway, so no big deal.
 		StorageUtil.IntListSet(self, DeclarativeMCM_OIDOffsets, oidIndex, -1)
+		StorageUtil.StringListSet(self, DeclarativeMCM_OIDInfos, oidIndex, info)
+		StorageUtil.IntListSet(self, DeclarativeMCM_OIDFlags, oidIndex, flags)
 	Else
 		result = StorageUtil.IntListAdd(self, DeclarativeMCM_OIDList, oid)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDIndices, index)
-		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDFlags, flags)
-		StorageUtil.StringListAdd(self, DeclarativeMCM_OIDInfos, info)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDTypes, typecode)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDOffsets, -1)
+		StorageUtil.StringListAdd(self, DeclarativeMCM_OIDInfos, info)
+		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDFlags, flags)
 	EndIf
 	If StorageUtil.IntListGet(self, DeclarativeMCM_IsDependent, index)
 		StorageUtil.IntListadd(self, DeclarativeMCM_OIDsWithDependencies, oidIndex, false)
@@ -1631,12 +1631,13 @@ EndFunction
 Function DeclarativeMCM_ClearOIDs()
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDIndices)
-	StorageUtil.IntListClear(self, DeclarativeMCM_OIDFlags)
+	StorageUtil.IntListClear(self, DeclarativeMCM_OIDTypes)
+	StorageUtil.IntListClear(self, DeclarativeMCM_OIDOffsets)
 	StorageUtil.StringListClear(self, DeclarativeMCM_OIDInfos)
+	StorageUtil.IntListClear(self, DeclarativeMCM_OIDFlags)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDExtras)
 	StorageUtil.FloatListClear(self, DeclarativeMCM_OIDExtras)
 	StorageUtil.StringListClear(self, DeclarativeMCM_OIDExtras)
-	StorageUtil.IntListClear(self, DeclarativeMCM_OIDOffsets)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDsWithDependencies)
 EndFunction
 
