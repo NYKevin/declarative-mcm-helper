@@ -758,6 +758,12 @@ Event OnOptionSelect(Int oid)
 			If failureMessage
 				ShowMessage(failureMessage, false)
 			EndIf
+			String errors = JsonUtil.GetErrors(path)
+			If LocalDevelopment() && errors
+				ShowMessage(errors, false)
+			Else
+				ShowMessage("No JSONUtil error message available.")
+			EndIf
 		EndIf
 	ElseIf oidType == OID_TYPE_MASK
 		Int oldValue = StorageUtil.GetIntValue(None, variable)
