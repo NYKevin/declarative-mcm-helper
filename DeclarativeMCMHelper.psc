@@ -606,6 +606,7 @@ Bool Function LoadAllVariables(String path)
 		i += 1
 	EndWhile
 	DeclarativeMCM_ProcessAllTriggers()
+	Return True
 EndFunction
 
 ; MCM overrides:
