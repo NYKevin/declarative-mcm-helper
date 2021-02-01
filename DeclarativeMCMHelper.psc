@@ -514,6 +514,7 @@ Int Function MakeResetButton(String label, String buttonText, String extraInfo, 
 	Int oid = AddTextOption(label, buttonText, flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_RESET, extraInfo, flags)
 	DeclarativeMCM_PushExtraString(oidIndex, confirmationMessage, true)
+	return oid
 EndFunction
 
 ; Create a series of checkboxes that act like radio buttons. Each checkbox
