@@ -51,6 +51,11 @@ Bool Function HandleKeyConflict(String variable, String conflictControl, String 
 	return ShowMessage("This key is already in use by " + conflictControl + " from " + conflictMod + ". Use it anyway?")
 EndFunction
 
+; Called when a generic button is pushed. Not needed unless you will be using
+; generic buttons.
+Function OnGenericButton(Int buttonId)
+EndFunction
+
 ; Functions to call from DeclareVariables():
 
 ; Note: Multiple calls to these functions with the same variable names are
@@ -517,6 +522,28 @@ Int Function MakeResetButton(String label, String buttonText, String extraInfo, 
 	return oid
 EndFunction
 
+; Create a text option that, when clicked, calls OnGenericButton(buttonId).
+; If latent is true, then the option is disabled until the menu is dismissed,
+; and OnGenericButton() doesn't run until that time. If latent is false, then
+; OnGenericButton() is called immediately, and you should avoid calling latent
+; functions since you could block the UI thread.
+; When the button is disabled, if altText is not "", then the button's text is
+; changed to altText
+Int Function MakeGenericButton(Int buttonId, String label, String buttonText, String extraInfo, String altText = "", Bool latent = true, Int flags = 0)
+	If latent && StorageUtil.IntListFind(self, DeclarativeMCM_PushedButtons, buttonId) != -1
+		flags = Math.LogicalOr(flags, OPTION_FLAG_DISABLED)
+		If altText
+			buttonText = altText
+		EndIf
+	EndIf
+	Int oid = AddTextOption(label, buttonText, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_GENERIC, extraInfo, flags)
+	DeclarativeMCM_PushExtraInt(oidIndex, buttonId, true)
+	DeclarativeMCM_PushExtraInt(oidIndex, latent as Int, true)
+	DeclarativeMCM_PushExtraString(oidIndex, altText, true)
+	return oid
+EndFunction
+
 ; Create a series of checkboxes that act like radio buttons. Each checkbox
 ; corresonds to one possible value of variable (which should be an enum). When
 ; the user selects a checkbox, all of the other checkboxes de-select themselves.
@@ -696,6 +723,17 @@ Event OnConfigClose()
 	DeclarativeMCM_ClearOIDs()
 EndEvent
 
+Event OnUpdate()
+	Int i = 0
+	Int count = StorageUtil.IntListCount(self, DeclarativeMCM_PushedButtons)
+	While i < count
+		Int buttonId = StorageUtil.IntListGet(self, DeclarativeMCM_PushedButtons, i)
+		OnGenericButton(buttonId)
+		i += 1
+	EndWhile
+	StorageUtil.IntListClear(self, DeclarativeMCM_PushedButtons)
+EndEvent
+
 Event OnOptionSelect(Int oid)
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex == -1
@@ -799,6 +837,23 @@ Event OnOptionSelect(Int oid)
 		EndWhile
 		DeclarativeMCM_ProcessAllTriggers()
 		ForcePageReset()
+	ElseIf oidType == OID_TYPE_GENERIC
+		Int buttonId = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
+		Bool latent = DeclarativeMCM_GetExtraInt(oidIndex, 1, true)
+		If !latent
+			OnGenericButton(buttonId)
+			return
+		EndIf
+		If StorageUtil.IntListFind(self, DeclarativeMCM_PushedButtons, buttonId) != -1
+			return
+		EndIf
+		StorageUtil.IntListAdd(self, DeclarativeMCM_PushedButtons, buttonId)
+		DeclarativeMCM_SetEnabled(oidIndex, false)
+		String altText = DeclarativeMCM_GetExtraString(oidIndex, 2, true)
+		If altText
+			SetTextOptionValue(oid, altText)
+		EndIf
+		RegisterForSingleUpdate(0.01)
 	ElseIf oidType == OID_TYPE_RADIO
 		Int oldValue = StorageUtil.GetIntValue(None, variable)
 		Int size = DeclarativeMCM_GetExtraInt(index, 1)
@@ -1237,6 +1292,7 @@ Int Property OID_TYPE_RESET = 11 autoreadonly
 Int Property OID_TYPE_RADIO = 12 autoreadonly
 ; Used for SetHoverText() on a non-declarative OID.
 Int Property OID_TYPE_EXTERNAL = 13 autoreadonly
+Int Property OID_TYPE_GENERIC = 14 autoreadonly
 
 ; The internal variable table. Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.
@@ -1289,6 +1345,8 @@ String Property DeclarativeMCM_OIDsWithDependencies = "DeclarativeMCM:OIDsWithDe
 
 ; Temporary variable for building arrays.
 String Property DeclarativeMCM_Scratch = "DeclarativeMCM:Scratch" autoreadonly
+; List of generic buttons which have been pushed and are waiting to run.
+String Property DeclarativeMCM_PushedButtons = "DeclarativeMCM:PushedButtons" autoreadonly
 
 ; Lock to protect DeclareVariables() from being re-entered.
 Bool DeclarativeMCM_InDeclareVariables
