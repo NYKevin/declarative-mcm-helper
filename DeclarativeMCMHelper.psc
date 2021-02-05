@@ -1555,10 +1555,8 @@ EndFunction
 
 ; Save an OID. Returns the index into the OID table.
 Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String info, Int flags)
-	Int result
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex != -1
-		result = oidIndex
 		; OIDList already has the correct value.
 		StorageUtil.IntListSet(self, DeclarativeMCM_OIDIndices, oidIndex, index)
 		StorageUtil.IntListSet(self, DeclarativeMCM_OIDTypes, oidIndex, typecode)
@@ -1569,7 +1567,7 @@ Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String inf
 		StorageUtil.StringListSet(self, DeclarativeMCM_OIDInfos, oidIndex, info)
 		StorageUtil.IntListSet(self, DeclarativeMCM_OIDFlags, oidIndex, flags)
 	Else
-		result = StorageUtil.IntListAdd(self, DeclarativeMCM_OIDList, oid)
+		oidIndex = StorageUtil.IntListAdd(self, DeclarativeMCM_OIDList, oid)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDIndices, index)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDTypes, typecode)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDOffsets, -1)
@@ -1579,7 +1577,7 @@ Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String inf
 	If StorageUtil.IntListGet(self, DeclarativeMCM_IsDependent, index)
 		StorageUtil.IntListadd(self, DeclarativeMCM_OIDsWithDependencies, oidIndex, false)
 	EndIf
-	return result
+	return oidIndex
 EndFunction
 
 ; Push an int of extra data, associated with index in either the variable table
