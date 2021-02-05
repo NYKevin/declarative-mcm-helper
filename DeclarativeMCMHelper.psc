@@ -1458,7 +1458,7 @@ Function DeclarativeMCM_SetVariableEnabled(Int index, Bool enabled)
 	Int count = StorageUtil.IntListCount(self, DeclarativeMCM_OIDsWithDependencies)
 	While i < count
 		Int oidIndex = StorageUtil.IntListGet(self, DeclarativeMCM_OIDsWithDependencies, i)
-		If StorageUtil.GetIntValue(self, DeclarativeMCM_OIDIndices, oidIndex) == index
+		If StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex) == index
 			DeclarativeMCM_SetEnabled(oidIndex, enabled)
 		EndIf
 		i += 1
@@ -1468,10 +1468,10 @@ EndFunction
 ; Notify syncing and dependencies that the variable has changed.
 ; statusChanged: Whether the variable changed from falsey to truthy or vice-versa.
 Function DeclarativeMCM_ProcessTriggers(Int index, Bool statusChanged)
-	If StorageUtil.GetIntValue(self, DeclarativeMCM_IsSynced, index)
+	If StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
 		DeclarativeMCM_SyncVariable(index)
 	EndIf
-	If !statusChanged || !StorageUtil.GetIntValue(self, DeclarativeMCM_HasDependent, index)
+	If !statusChanged || !StorageUtil.IntListGet(self, DeclarativeMCM_HasDependent, index)
 		return
 	EndIf
 	Int i = 0
