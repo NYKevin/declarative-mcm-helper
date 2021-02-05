@@ -1459,7 +1459,7 @@ Function DeclarativeMCM_SetVariableEnabled(Int index, Bool enabled)
 	While i < count
 		Int oidIndex = StorageUtil.IntListGet(self, DeclarativeMCM_OIDsWithDependencies, i)
 		If StorageUtil.GetIntValue(self, DeclarativeMCM_OIDIndices, oidIndex) == index
-			DeclarativeMCM_SetEnabled(i, enabled)
+			DeclarativeMCM_SetEnabled(oidIndex, enabled)
 		EndIf
 		i += 1
 	EndWhile
