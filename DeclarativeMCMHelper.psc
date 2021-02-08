@@ -62,9 +62,14 @@ EndFunction
 ; ignored. It's always safe to re-declare a variable that already exists.
 ; However, if the types don't match, you will get an error.
 
+; Common arguments:
+; * variable: A string identifying this variable.
+;   The value can be retrieved with StorageUtil.GetIntValue(None, variable) (or GetFloatValue/GetStringValue, as applicable).
+;   It is strongly recommended to prefix variable with the name of your mod.
+; * default: The default value. If the variable is unset, it is initialized to this value.
+
 ; Declare a new boolean value.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
-; It is strongly recommended to prefix variable with the name of your mod.
 Function DeclareBool(String variable, Bool default = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_BOOL)
 		return
@@ -78,7 +83,6 @@ EndFunction
 
 ; Declare a new integer.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
-; It is strongly recommended to prefix variable with the name of your mod.
 Function DeclareInt(String variable, Int default = 0)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_INT)
 		return
@@ -92,7 +96,6 @@ EndFunction
 
 ; Declare a new floating-point value.
 ; It can later be accessed with StorageUtil.GetFloatValue(None, variable).
-; It is strongly recommended to prefix variable with the name of your mod.
 Function DeclareFloat(String variable, Float default = 0.0)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_FLOAT)
 		return
@@ -106,7 +109,6 @@ EndFunction
 
 ; Declare a new string.
 ; It can later be accessed with StorageUtil.GetStringValue(None, variable).
-; It is strongly recommended to prefix variable with the name of your mod.
 Function DeclareString(String variable, String default = "")
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_STRING)
 		return
@@ -122,7 +124,6 @@ EndFunction
 ; It's an integer which can take on a value from zero (inclusive) to size
 ; (exclusive). Used for drop-down options and that sort of thing.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
-; It is strongly recommended to prefix variable with the name of your mod.
 Function DeclareEnum(String variable, Int size, Int default = 0)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_ENUM)
 		return
@@ -149,7 +150,6 @@ EndFunction
 ; the same key. If registerForKey is true, we call RegisterForKey() every time
 ; this variable's value changes, and UnregisterForKey() on the previous value.
 ; The value can later be accessed with StorageUtil.GetIntValue(None, variable).
-; It is strongly recommended to prefix variable with the name of your mod.
 Function DeclareKeyCode(String variable, String nameForConflicts, Bool registerForKey, Int default = 0)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_KEY)
 		return
