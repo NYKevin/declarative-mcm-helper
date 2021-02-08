@@ -1419,6 +1419,9 @@ EndFunction
 
 ; Return true if we want to enable the variable index.
 Bool Function DeclarativeMCM_ShouldEnable(Int index)
+	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
+		return false
+	EndIf
 	Int i = 0
 	Int count = StorageUtil.IntListCount(self, DeclarativeMCM_DependencyLHS)
 	While i < count
@@ -1437,7 +1440,7 @@ Bool Function DeclarativeMCM_ShouldEnable(Int index)
 EndFunction
 
 Int Function DeclarativeMCM_AdjustFlags(Int index, Int flags)
-	If !StorageUtil.IntListGet(self, DeclarativeMCM_IsDependent, index)
+	If !StorageUtil.IntListGet(self, DeclarativeMCM_IsDependent, index) && !StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
 		return flags
 	EndIf
 	If DeclarativeMCM_ShouldEnable(index)
