@@ -67,55 +67,56 @@ EndFunction
 ;   The value can be retrieved with StorageUtil.GetIntValue(None, variable) (or GetFloatValue/GetStringValue, as applicable).
 ;   It is strongly recommended to prefix variable with the name of your mod.
 ; * default: The default value. If the variable is unset, it is initialized to this value.
+; * readOnly: If true, the variable is never modified by DeclarativeMCM and won't be included in save/load.
 
 ; Declare a new boolean value.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
-Function DeclareBool(String variable, Bool default = false)
+Function DeclareBool(String variable, Bool default = false, Bool readOnly = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_BOOL)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_BOOL)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_BOOL, readOnly)
 	DeclarativeMCM_PushExtraInt(index, default as Int)
-	If !StorageUtil.HasIntValue(None, variable)
+	If !readOnly && !StorageUtil.HasIntValue(None, variable)
 		StorageUtil.SetIntValue(None, variable, default as Int)
 	EndIf
 EndFunction
 
 ; Declare a new integer.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
-Function DeclareInt(String variable, Int default = 0)
+Function DeclareInt(String variable, Int default = 0, Bool readOnly = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_INT)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_INT)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_INT, readOnly)
 	DeclarativeMCM_PushExtraInt(index, default)
-	If !StorageUtil.HasIntValue(None, variable)
+	If !readOnly && !StorageUtil.HasIntValue(None, variable)
 		StorageUtil.SetIntValue(None, variable, default)
 	EndIf
 EndFunction
 
 ; Declare a new floating-point value.
 ; It can later be accessed with StorageUtil.GetFloatValue(None, variable).
-Function DeclareFloat(String variable, Float default = 0.0)
+Function DeclareFloat(String variable, Float default = 0.0, Bool readOnly = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_FLOAT)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_FLOAT)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_FLOAT, readOnly)
 	DeclarativeMCM_PushExtraFloat(index, default)
-	If !StorageUtil.HasFloatValue(None, variable)
+	If !readOnly && !StorageUtil.HasFloatValue(None, variable)
 		StorageUtil.SetFloatValue(None, variable, default)
 	EndIf
 EndFunction
 
 ; Declare a new string.
 ; It can later be accessed with StorageUtil.GetStringValue(None, variable).
-Function DeclareString(String variable, String default = "")
+Function DeclareString(String variable, String default = "", Bool readOnly = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_STRING)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_STRING)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_STRING, readOnly)
 	DeclarativeMCM_PushExtraString(index, default)
-	If !StorageUtil.HasStringValue(None, variable)
+	If !readOnly && !StorageUtil.HasStringValue(None, variable)
 		StorageUtil.SetStringValue(None, variable, default)
 	EndIf
 EndFunction
@@ -124,7 +125,7 @@ EndFunction
 ; It's an integer which can take on a value from zero (inclusive) to size
 ; (exclusive). Used for drop-down options and that sort of thing.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
-Function DeclareEnum(String variable, Int size, Int default = 0)
+Function DeclareEnum(String variable, Int size, Int default = 0, Bool readOnly = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_ENUM)
 		return
 	EndIf
@@ -136,10 +137,10 @@ Function DeclareEnum(String variable, Int size, Int default = 0)
 		DeclarativeMCM_WarnBadEnumDefault(variable)
 		default = 0
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_ENUM)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_ENUM, readOnly)
 	DeclarativeMCM_PushExtraInt(index, default)
 	DeclarativeMCM_PushExtraInt(index, size)
-	If !StorageUtil.HasIntValue(None, variable)
+	If !readOnly && !StorageUtil.HasIntValue(None, variable)
 		StorageUtil.SetIntValue(None, variable, default)
 	EndIf
 EndFunction
@@ -150,15 +151,15 @@ EndFunction
 ; the same key. If registerForKey is true, we call RegisterForKey() every time
 ; this variable's value changes, and UnregisterForKey() on the previous value.
 ; The value can later be accessed with StorageUtil.GetIntValue(None, variable).
-Function DeclareKeyCode(String variable, String nameForConflicts, Bool registerForKey, Int default = 0)
+Function DeclareKeyCode(String variable, String nameForConflicts, Bool registerForKey, Int default = 0, Bool readOnly = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_KEY)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_KEY)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_KEY, readOnly)
 	DeclarativeMCM_PushExtraInt(index, default)
 	DeclarativeMCM_PushExtraInt(index, registerForKey as Int)
 	DeclarativeMCM_PushExtraString(index, nameForConflicts)
-	If !StorageUtil.HasIntValue(None, variable)
+	If !readOnly && !StorageUtil.HasIntValue(None, variable)
 		If default && registerForKey
 			RegisterForKey(default)
 		EndIf
@@ -1310,6 +1311,8 @@ String Property DeclarativeMCM_IsDependent = "DeclarativeMCM:IsDependent" autore
 String Property DeclarativeMCM_HasDependent = "DeclarativeMCM:HasDependent" autoreadonly
 ; Truthy if this variable will be sync'd to a GlobalVariable
 String Property DeclarativeMCM_IsSynced = "DeclarativeMCM:IsSynced" autoreadonly
+; Truthy if this variable should be considered read-only. No initialization, no saving, no resets.
+String Property DeclarativeMCM_IsReadOnly = "DeclarativeMCM:IsReadOnly" autoreadonly
 
 ; Other stuff that also gets set up by DeclareVariables()
 ; The list of pages that we will create.
@@ -1353,18 +1356,22 @@ Bool DeclarativeMCM_InDeclareVariables
 
 ; Add a new variable to the internal variable table. Returns the index into the
 ; table where the variable was created.
-Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode)
+Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode, Bool IsReadOnly)
 	Int result = StorageUtil.StringListAdd(self, DeclarativeMCM_VariableList, variable)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_TypeList, typecode)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_OffsetList, -1)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_IsDependent, 0)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_HasDependent, 0)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_IsSynced, 0)
+	StorageUtil.IntListAdd(self, DeclarativeMCM_IsReadOnly, IsReadOnly as Int)
 	return result
 EndFunction
 
 ; Save a variable directly to path.
 Function DeclarativeMCM_SaveVariable(String path, Int index)
+	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
+		return
+	EndIf
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	If typecode == TYPECODE_FLOAT
@@ -1379,6 +1386,9 @@ EndFunction
 ; Load a variable directly from path, or use its default value if JsonUtil
 ; has no value to give us.
 Function DeclarativeMCM_LoadVariable(String path, Int index)
+	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
+		return
+	EndIf
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	If typecode == TYPECODE_FLOAT
@@ -1521,18 +1531,27 @@ EndFunction
 
 ; Resets a variable to its default value, which is then returned.
 Int Function DeclarativeMCM_ResetIntVariable(Int index, String variable)
+	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
+		return StorageUtil.GetIntValue(None, variable)
+	EndIf
 	Int default = DeclarativeMCM_GetExtraInt(index, 0)
 	StorageUtil.SetIntValue(None, variable, default)
 	return default
 EndFunction
 
 Float Function DeclarativeMCM_ResetFloatVariable(Int index, String variable)
+	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
+		return StorageUtil.GetFloatValue(None, variable)
+	EndIf
 	Float default = DeclarativeMCM_GetExtraFloat(index, 0)
 	StorageUtil.SetFloatValue(None, variable, default)
 	return default
 EndFunction
 
 String Function DeclarativeMCM_ResetStringVariable(Int index, String variable)
+	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
+		return StorageUtil.GetStringValue(None, variable)
+	EndIf
 	String default = DeclarativeMCM_GetExtraString(index, 0)
 	StorageUtil.SetStringValue(None, variable, default)
 	return default
@@ -1680,6 +1699,7 @@ Function DeclarativeMCM_ClearVariables()
 	StorageUtil.IntListClear(self, DeclarativeMCM_IsDependent)
 	StorageUtil.IntListClear(self, DeclarativeMCM_HasDependent)
 	StorageUtil.IntListClear(self, DeclarativeMCM_IsSynced)
+	StorageUtil.IntListClear(self, DeclarativeMCM_IsReadOnly)
 	StorageUtil.StringListClear(self, DeclarativeMCM_PageList)
 	StorageUtil.StringListClear(self, DeclarativeMCM_GlobalSyncList)
 	StorageUtil.FormListClear(self, DeclarativeMCM_GlobalSyncList)
