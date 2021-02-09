@@ -56,6 +56,14 @@ EndFunction
 Function OnGenericButton(Int buttonId)
 EndFunction
 
+; Called when saving/loading data, so that you can save or load additional data
+; which DeclarativeMCM is not aware of. Not needed for any variables which you
+; declared in DeclareVariables().
+Function SaveExtraData(String path)
+EndFunction
+Function LoadExtraData(String path)
+EndFunction
+
 ; Functions to call from DeclareVariables():
 
 ; Note: Multiple calls to these functions with the same variable names are
@@ -619,6 +627,7 @@ Bool Function SaveAllVariables(String path)
 		DeclarativeMCM_SaveVariable(path, i)
 		i += 1
 	EndWhile
+	SaveExtraData(path)
 	Return JsonUtil.Save(path)
 EndFunction
 
@@ -634,6 +643,7 @@ Bool Function LoadAllVariables(String path)
 		DeclarativeMCM_LoadVariable(path, i)
 		i += 1
 	EndWhile
+	LoadExtraData(path)
 	DeclarativeMCM_ProcessAllTriggers()
 	Return True
 EndFunction
