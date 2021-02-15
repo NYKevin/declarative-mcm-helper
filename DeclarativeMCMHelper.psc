@@ -1435,7 +1435,17 @@ Function DeclarativeMCM_LoadVariable(String path, Int index)
 		StorageUtil.FormListCopy(None, variable, value)
 	Else
 		Int iDefault = DeclarativeMCM_GetExtraInt(index, 0)
-		StorageUtil.SetIntValue(None, variable, JsonUtil.GetIntValue(path, variable, iDefault))
+		Int iOldValue = StorageUtil.GetIntValue(None, variable)
+		Int iNewValue = JsonUtil.GetIntValue(path, variable, iDefault)
+		StorageUtil.SetIntValue(None, variable, iNewValue)
+		If typecode == TYPECODE_KEY && DeclarativeMCM_GetExtraInt(index, 1)
+			If iOldValue
+				UnregisterForKey(iOldValue)
+			EndIf
+			If iNewValue
+				RegisterForKey(iNewValue)
+			EndIf
+		EndIf
 	EndIf
 EndFunction
 
