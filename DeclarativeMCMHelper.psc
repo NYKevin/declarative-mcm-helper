@@ -1201,7 +1201,7 @@ Event OnOptionDefault(Int oid)
 	; default, then fall through to the next part.
 	ElseIf typecode == TYPECODE_FLOAT
 		fOldValue = StorageUtil.GetFloatValue(None, variable)
-		fDefault = DeclarativeMCM_ResetIntVariable(index, variable)
+		fDefault = DeclarativeMCM_ResetFloatVariable(index, variable)
 		If fOldValue == fDefault
 			return
 		EndIf
