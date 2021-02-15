@@ -618,6 +618,20 @@ Int Function MakeSingleRadioButton(String variable, Int choice, String label, St
 	return DeclarativeMCM_MakeSingleRadioButton(index, choice, choice == value, label, extraInfo, flags)
 EndFunction
 
+Int Function MakeFormListCheckbox(String variable, Form item, String label, String extraInfo, Int flags = 0)
+	DeclareFormList(variable)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_FORM_LIST, true)
+	If index == -1
+		return -1
+	EndIf
+	Bool checked = StorageUtil.FormListHas(None, variable, item)
+	flags = DeclarativeMCM_AdjustFlags(index, flags)
+	Int oid = AddToggleOption(label, checked, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLIST_CHECKBOX, extraInfo, flags)
+	DeclarativeMCM_PushExtraForm(oidIndex, item, true)
+	return oid
+EndFunction
+
 ; Set the hover text of oid. Works even if oid was created with a regular MCM
 ; AddFooOption() function.
 Function SetHoverText(Int oid, String extraInfo)
@@ -903,6 +917,25 @@ Event OnOptionSelect(Int oid)
 			EndIf
 			i += 1
 		EndWhile
+	ElseIf oidType == OID_TYPE_FLIST_CHECKBOX
+		Form item = DeclarativeMCM_GetExtraForm(oidIndex, 0, true)
+		Bool value = StorageUtil.FormListHas(None, variable, item)
+		value = !value
+		If value
+			StorageUtil.FormListAdd(None, variable, item)
+			If !Validate(variable)
+				StorageUtil.FormListRemove(None, variable, item)
+				return
+			EndIf
+		Else
+			StorageUtil.FormListRemove(None, variable, item)
+			If !Validate(variable)
+				StorageUtil.FormListAdd(None, variable, item)
+				return
+			EndIf
+		EndIf
+		DeclarativeMCM_ProcessTriggers(index, true)
+		SetToggleOptionValue(oid, value)
 	EndIf
 EndEvent
 
@@ -1178,8 +1211,8 @@ Event OnOptionDefault(Int oid)
 	String sOldValue
 	Int iDefault
 	Int iOldValue
-	; In *most* cases, we want to default the entire variable, but there's one
-	; exception to that rule. For masks, just default the one checkbox.
+	; In *most* cases, we want to default the entire variable, but there's two
+	; exceptions to that rule. For masks, just default the one checkbox.
 	If oidType == OID_TYPE_MASK
 		iOldValue = StorageUtil.GetIntValue(None, variable)
 		Int newValue = iOldValue
@@ -1195,6 +1228,36 @@ Event OnOptionDefault(Int oid)
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (newValue as Bool) != (iOldValue as Bool))
 		SetToggleOptionValue(oid, maskedDefault)
+		return
+	; For flist checkboxes, just default the one item.
+	ElseIf oidType == OID_TYPE_FLIST_CHECKBOX
+		FormList flDefault = DeclarativeMCM_GetExtraForm(index, 0) as FormList
+		Form item = DeclarativeMCM_GetExtraForm(oidIndex, 0, true)
+		Bool changed
+		Bool checked
+		If flDefault && flDefault.HasForm(item)
+			changed = !StorageUtil.FormListHas(None, variable, item)
+			If changed
+				StorageUtil.FormListAdd(None, variable, item)
+				If !Validate(variable)
+					StorageUtil.FormListRemove(None, variable, item)
+					return
+				EndIf
+			EndIf
+			checked = true
+		Else
+			changed = StorageUtil.FormListHas(None, variable, item)
+			If changed
+				StorageUtil.FormListRemove(None, variable, item)
+				If !Validate(variable)
+					StorageUtil.FormListAdd(None, variable, item)
+					return
+				EndIf
+			EndIf
+			checked = false
+		EndIf
+		DeclarativeMCM_ProcessTriggers(index, changed)
+		SetToggleOptionValue(oid, checked)
 		return
 	; For all other cases, retrieve the default and the current (old) value,
 	; set the variable to the default, call Validate(), and if it accepts the
@@ -1320,6 +1383,7 @@ Int Property OID_TYPE_RADIO = 12 autoreadonly
 ; Used for SetHoverText() on a non-declarative OID.
 Int Property OID_TYPE_EXTERNAL = 13 autoreadonly
 Int Property OID_TYPE_GENERIC = 14 autoreadonly
+Int Property OID_TYPE_FLIST_CHECKBOX = 15 autoreadonly
 
 ; The internal variable table. Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.
