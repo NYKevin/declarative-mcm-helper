@@ -175,6 +175,21 @@ Function DeclareKeyCode(String variable, String nameForConflicts, Bool registerF
 	EndIf
 EndFunction
 
+; Declare a new form list.
+; The form list will be stored in a StorageUtil form list variable, *not* in the
+; FormList passed as default. If default is None, then use the empty list as the
+; default value.
+Function DeclareFormList(String variable, FormList default = None, Bool readOnly = false)
+	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_FORM_LIST)
+		return
+	EndIf
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_FORM_LIST, readOnly)
+	DeclarativeMCM_PushExtraForm(index, default)
+	If !readOnly && default && !StorageUtil.FormListCount(None, variable)
+		StorageUtil.FormListCopy(None, variable, default.ToArray())
+	EndIf
+EndFunction
+
 ; Declare a new page. Pages will appear in the order they were declared.
 ; If you do not call this function, then the Pages variable will be left alone.
 ; Do this if you prefer to configure pages from the Creation Kit.
@@ -1286,6 +1301,7 @@ Int Property TYPECODE_FLOAT = 2 autoreadonly
 Int Property TYPECODE_STRING = 3 autoreadonly
 Int Property TYPECODE_ENUM = 4 autoreadonly
 Int Property TYPECODE_KEY = 5 autoreadonly
+Int Property TYPECODE_FORM_LIST = 6 autoreadonly
 
 ; Types for OIDs created in MakeUserInterface()
 Int Property OID_TYPE_CHECKBOX = 0 autoreadonly
@@ -1388,6 +1404,9 @@ Function DeclarativeMCM_SaveVariable(String path, Int index)
 		JsonUtil.SetFloatValue(path, variable, StorageUtil.GetFloatValue(None, variable))
 	ElseIf typecode == TYPECODE_STRING
 		JsonUtil.SetStringValue(path, variable, StorageUtil.GetStringValue(None, variable))
+	ElseIf typecode == TYPECODE_FORM_LIST
+		Form[] temp = StorageUtil.FormListToArray(None, variable)
+		JsonUtil.FormListCopy(path, variable, temp)
 	Else
 		JsonUtil.SetIntValue(path, variable, StorageUtil.GetIntValue(None, variable))
 	EndIf
@@ -1404,15 +1423,20 @@ Function DeclarativeMCM_LoadVariable(String path, Int index)
 	If typecode == TYPECODE_FLOAT
 		Float fDefault = DeclarativeMCM_GetExtraFloat(index, 0)
 		StorageUtil.SetFloatValue(None, variable, JsonUtil.GetFloatValue(path, variable, fDefault))
-		return
-	EndIf
-	If typecode == TYPECODE_STRING
+	ElseIf typecode == TYPECODE_STRING
 		String sDefault = DeclarativeMCM_GetExtraString(index, 0)
 		StorageUtil.SetStringValue(None, variable, JsonUtil.GetStringValue(path, variable, sDefault))
-		return
+	ElseIf typecode == TYPECODE_FORM_LIST
+		Form[] value = JsonUtil.FormListToArray(path, variable)
+		FormList flDefault = DeclarativeMCM_GetExtraForm(index, 0) as FormList
+		If flDefault && (!value || value.length == 0)
+			value = flDefault.ToArray()
+		EndIf
+		StorageUtil.FormListCopy(None, variable, value)
+	Else
+		Int iDefault = DeclarativeMCM_GetExtraInt(index, 0)
+		StorageUtil.SetIntValue(None, variable, JsonUtil.GetIntValue(path, variable, iDefault))
 	EndIf
-	Int iDefault = DeclarativeMCM_GetExtraInt(index, 0)
-	StorageUtil.SetIntValue(None, variable, JsonUtil.GetIntValue(path, variable, iDefault))
 EndFunction
 
 Bool Function DeclarativeMCM_IsTruthy(Int index)
@@ -1422,6 +1446,8 @@ Bool Function DeclarativeMCM_IsTruthy(Int index)
 		return StorageUtil.GetStringValue(None, variable)
 	ElseIf typecode == TYPECODE_FLOAT
 		return StorageUtil.GetFloatValue(None, variable)
+	ElseIf typecode == TYPECODE_FORM_LIST
+		return StorageUtil.FormListCount(None, variable)
 	Else
 		return StorageUtil.GetIntValue(None, variable)
 	EndIf
@@ -1663,6 +1689,22 @@ Function DeclarativeMCM_PushExtraString(Int index, String extra, Bool oid = fals
 	DeclarativeMCM_PushExtraInt(index, offsetIndex, oid)
 EndFunction
 
+; Push a form of extra data. Appends the string to an extra list, and pushes
+; the form's offset as an extra int (see above).
+Function DeclarativeMCM_PushExtraForm(Int index, Form extra, Bool oid = false)
+	String extraList
+	String offsetList
+	If oid
+		extraList = DeclarativeMCM_OIDExtras
+		offsetList = DeclarativeMCM_OIDOffsets
+	Else
+		extraList = DeclarativeMCM_ExtraList
+		offsetList = DeclarativeMCM_OffsetList
+	EndIf
+	Int offsetIndex = StorageUtil.FormListAdd(self, extraList, extra)
+	DeclarativeMCM_PushExtraInt(index, offsetIndex, oid)
+EndFunction
+
 ; Retrieval functions for the above push functions.
 Int Function DeclarativeMCM_GetExtraInt(Int index, int subIndex, Bool oid = false)
 	String extraList
@@ -1700,6 +1742,17 @@ String Function DeclarativeMCM_GetExtraString(Int index, Int subIndex, Bool oid 
 	return StorageUtil.StringListGet(self, extraList, offsetIndex)
 EndFunction
 
+Form Function DeclarativeMCM_GetExtraForm(Int index, Int subIndex, Bool oid = false)
+	String extraList
+	If oid
+		extraList = DeclarativeMCM_OIDExtras
+	Else
+		extraList = DeclarativeMCM_ExtraList
+	EndIf
+	Int offsetIndex = DeclarativeMCM_GetExtraInt(index, subIndex, oid)
+	return StorageUtil.FormListGet(self, extraList, offsetIndex)
+EndFunction
+
 ; Clears the variable table. Doesn't touch the actual *values*, just our
 ; internal metadata about them. DeclareVariables() will re-populate the table.
 Function DeclarativeMCM_ClearVariables()
@@ -1708,6 +1761,7 @@ Function DeclarativeMCM_ClearVariables()
 	StorageUtil.IntListClear(self, DeclarativeMCM_ExtraList)
 	StorageUtil.FloatListClear(self, DeclarativeMCM_ExtraList)
 	StorageUtil.StringListClear(self, DeclarativeMCM_ExtraList)
+	StorageUtil.FormListClear(self, DeclarativeMCM_ExtraList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OffsetList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_IsDependent)
 	StorageUtil.IntListClear(self, DeclarativeMCM_HasDependent)
@@ -1735,6 +1789,7 @@ Function DeclarativeMCM_ClearOIDs()
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDExtras)
 	StorageUtil.FloatListClear(self, DeclarativeMCM_OIDExtras)
 	StorageUtil.StringListClear(self, DeclarativeMCM_OIDExtras)
+	StorageUtil.FormListClear(self, DeclarativeMCM_OIDExtras)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDsWithDependencies)
 EndFunction
 
