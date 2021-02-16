@@ -677,7 +677,7 @@ Bool Function SaveAllVariables(String path)
 		i += 1
 	EndWhile
 	SaveExtraData(path)
-	Return JsonUtil.Save(path)
+	Return JsonUtil.Save(path, !LocalDevelopment())
 EndFunction
 
 ; Load data from an external file as if the user had pressed a load button.
