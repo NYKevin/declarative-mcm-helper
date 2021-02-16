@@ -235,6 +235,26 @@ Function SyncToGlobal(String variable, GlobalVariable dest)
 	EndIf
 EndFunction
 
+Function SyncToFormList(String variable, FormList dest)
+	Int index = DeclarativeMCM_ValidateSyncToFormList(variable, dest)
+	If index == -1
+		return
+	EndIf
+	Int i = 0
+	Int len = StorageUtil.IntListCount(self, DeclarativeMCM_GlobalSyncList)
+	While i < len
+		If StorageUtil.IntListGet(self, DeclarativeMCM_GlobalSyncList, i) == index && StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, i) == dest
+			return
+		EndIf
+		i += 1
+	EndWhile
+	StorageUtil.IntListAdd(self, DeclarativeMCM_GlobalSyncList, index)
+	StorageUtil.FormListAdd(self, DeclarativeMCM_GlobalSyncList, dest)
+	StorageUtil.IntListSet(self, DeclarativeMCM_IsSynced, index, 1)
+	dest.Revert()
+	dest.AddForms(StorageUtil.FormListToArray(None, variable))
+EndFunction
+
 ; Declare that the variable left depends on the variable right in some way.
 ; Pass one of the integers listed below as verb.
 ;
@@ -1612,18 +1632,22 @@ EndFunction
 Function DeclarativeMCM_SyncVariable(Int index)
 	Int i = 0
 	Int len = StorageUtil.IntListCount(self, DeclarativeMCM_GlobalSyncList)
+	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	While i < len
 		If index == StorageUtil.IntListGet(self, DeclarativeMCM_GlobalSyncList, i)
-			GlobalVariable dest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, i) as GlobalVariable
-			String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-			Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+			Form dest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, i)
 			If dest
-				If typecode == TYPECODE_FLOAT
+				If typecode == TYPECODE_FORM_LIST
+					Form[] value = StorageUtil.FormListToArray(None, variable)
+					(dest as FormList).Revert()
+					(dest as FormList).AddForms(value)
+				ElseIf typecode == TYPECODE_FLOAT
 					Float value = StorageUtil.GetFloatValue(None, variable)
-					dest.SetValue(value)
+					(dest as GlobalVariable).SetValue(value)
 				Else
 					Int value = StorageUtil.GetIntValue(None, variable)
-					dest.SetValue(value as Float)
+					(dest as GlobalVariable).SetValue(value as Float)
 				EndIf
 			EndIf
 			return
@@ -1904,16 +1928,38 @@ Int Function DeclarativeMCM_ValidateUI(String variable, Int typecode, Bool warnU
 EndFunction
 
 ; Return the index into the variable table for the named variable, or -1 if the
-; variable doesn't exist or is a string (you can't put a string in a global).
+; variable doesn't exist or is a string or form list.
 Int Function DeclarativeMCM_ValidateSyncToGlobal(String variable, GlobalVariable dest)
 	Int index = DeclarativeMCM_ValidateVariableExists(variable)
 	If index != -1
-		If StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) == TYPECODE_STRING
+		Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+		If typecode == TYPECODE_STRING || typecode == TYPECODE_FORM_LIST
 			DeclarativeMCM_WarnCantSync(variable)
 			return -1
 		ElseIf StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
 			Int syncIndex = StorageUtil.IntListFind(self, DeclarativeMCM_GlobalSyncList, index)
 			GlobalVariable originalDest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, syncIndex) as GlobalVariable
+			If originalDest != dest
+				DeclarativeMCM_WarnMultipleSync(variable)
+			EndIf
+			return -1
+		EndIf
+	EndIf
+	return index
+EndFunction
+
+; Return the index into the variable table for the named variable, or -1 if the
+; variable doesn't exist or is not a form list
+Int Function DeclarativeMCM_ValidateSyncToFormList(String variable, FormList dest)
+	Int index = DeclarativeMCM_ValidateVariableExists(variable)
+	If index != -1
+		Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+		If typecode != TYPECODE_FORM_LIST
+			DeclarativeMCM_WarnCantSync(variable)
+			return -1
+		ElseIf StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
+			Int syncIndex = StorageUtil.IntListFind(self, DeclarativeMCM_GlobalSyncList, index)
+			FormList originalDest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, syncIndex) as FormList
 			If originalDest != dest
 				DeclarativeMCM_WarnMultipleSync(variable)
 			EndIf
