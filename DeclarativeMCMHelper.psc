@@ -954,7 +954,7 @@ Event OnOptionSelect(Int oid)
 				return
 			EndIf
 		EndIf
-		DeclarativeMCM_ProcessTriggers(index, true)
+		DeclarativeMCM_ProcessFormListTriggers(index, item, value)
 		SetToggleOptionValue(oid, value)
 	EndIf
 EndEvent
@@ -1608,13 +1608,8 @@ Function DeclarativeMCM_SetVariableEnabled(Int index, Bool enabled)
 	EndWhile
 EndFunction
 
-; Notify syncing and dependencies that the variable has changed.
-; statusChanged: Whether the variable changed from falsey to truthy or vice-versa.
-Function DeclarativeMCM_ProcessTriggers(Int index, Bool statusChanged)
-	If StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
-		DeclarativeMCM_SyncVariable(index)
-	EndIf
-	If !statusChanged || !StorageUtil.IntListGet(self, DeclarativeMCM_HasDependent, index)
+Function DeclarativeMCM_ProcessEnableFlags(Int index)
+	If !StorageUtil.IntListGet(self, DeclarativeMCM_HasDependent, index)
 		return
 	EndIf
 	Int i = 0
@@ -1628,32 +1623,61 @@ Function DeclarativeMCM_ProcessTriggers(Int index, Bool statusChanged)
 	EndWhile
 EndFunction
 
-; Sync variable to its owning global.
-Function DeclarativeMCM_SyncVariable(Int index)
+Function DeclarativeMCM_ProcessFormListTriggers(Int index, Form item, Bool added)
+	If StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
+		FormList dest = DeclarativeMCM_GetSyncDest(index) as FormList
+		If dest && added
+			dest.AddForm(item)
+		ElseIf dest
+			dest.RemoveAddedForm(item)
+		EndIf
+	EndIf
+	DeclarativeMCM_ProcessEnableFlags(index)
+EndFunction
+
+; Notify syncing and dependencies that the variable has changed.
+; statusChanged: Whether the variable changed from falsey to truthy or vice-versa.
+Function DeclarativeMCM_ProcessTriggers(Int index, Bool statusChanged)
+	If StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
+		DeclarativeMCM_SyncVariable(index)
+	EndIf
+	If !statusChanged
+		return
+	EndIf
+	DeclarativeMCM_ProcessEnableFlags(index)
+EndFunction
+
+Form Function DeclarativeMCM_GetSyncDest(Int index)
 	Int i = 0
 	Int len = StorageUtil.IntListCount(self, DeclarativeMCM_GlobalSyncList)
-	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	While i < len
 		If index == StorageUtil.IntListGet(self, DeclarativeMCM_GlobalSyncList, i)
-			Form dest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, i)
-			If dest
-				If typecode == TYPECODE_FORM_LIST
-					Form[] value = StorageUtil.FormListToArray(None, variable)
-					(dest as FormList).Revert()
-					(dest as FormList).AddForms(value)
-				ElseIf typecode == TYPECODE_FLOAT
-					Float value = StorageUtil.GetFloatValue(None, variable)
-					(dest as GlobalVariable).SetValue(value)
-				Else
-					Int value = StorageUtil.GetIntValue(None, variable)
-					(dest as GlobalVariable).SetValue(value as Float)
-				EndIf
-			EndIf
-			return
+			return StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, i)
 		EndIf
 		i += 1
 	EndWhile
+	return None
+EndFunction
+
+; Sync variable to its owning global.
+Function DeclarativeMCM_SyncVariable(Int index)
+	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+	Form dest = DeclarativeMCM_GetSyncDest(index)
+	If !dest
+		return
+	EndIf
+	If typecode == TYPECODE_FORM_LIST
+		Form[] value = StorageUtil.FormListToArray(None, variable)
+		(dest as FormList).Revert()
+		(dest as FormList).AddForms(value)
+	ElseIf typecode == TYPECODE_FLOAT
+		Float value = StorageUtil.GetFloatValue(None, variable)
+		(dest as GlobalVariable).SetValue(value)
+	Else
+		Int value = StorageUtil.GetIntValue(None, variable)
+		(dest as GlobalVariable).SetValue(value as Float)
+	EndIf
 EndFunction
 
 Function DeclarativeMCM_ProcessAllTriggers()
