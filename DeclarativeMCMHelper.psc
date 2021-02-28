@@ -1890,7 +1890,7 @@ Function DeclarativeMCM_ClearVariables()
 	StorageUtil.IntListClear(self, DeclarativeMCM_IsSynced)
 	StorageUtil.IntListClear(self, DeclarativeMCM_IsReadOnly)
 	StorageUtil.StringListClear(self, DeclarativeMCM_PageList)
-	StorageUtil.StringListClear(self, DeclarativeMCM_GlobalSyncList)
+	StorageUtil.IntListClear(self, DeclarativeMCM_GlobalSyncList)
 	StorageUtil.FormListClear(self, DeclarativeMCM_GlobalSyncList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_DependencyLHS)
 	StorageUtil.IntListClear(self, DeclarativeMCM_DependencyRHS)
@@ -1954,6 +1954,10 @@ EndFunction
 ; Return the index into the variable table for the named variable, or -1 if the
 ; variable doesn't exist or is a string or form list.
 Int Function DeclarativeMCM_ValidateSyncToGlobal(String variable, GlobalVariable dest)
+	If !dest
+		DeclarativeMCM_WarnNoDestination(variable)
+		return -1
+	EndIf
 	Int index = DeclarativeMCM_ValidateVariableExists(variable)
 	If index != -1
 		Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
@@ -2083,6 +2087,12 @@ EndFunction
 Function DeclarativeMCM_WarnCantSync(String variable)
 	If LocalDevelopment()
 		Debug.MessageBox("Warning: Can't sync string variable " + variable + " to a global.")
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnNoDestination(String variable)
+	If LocalDevelopment()
+		Debug.MessageBox("Warning: Can't sync variable " + variable + " because the destination specified was None.")
 	EndIf
 EndFunction
 
