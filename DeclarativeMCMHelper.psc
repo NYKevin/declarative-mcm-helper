@@ -81,6 +81,7 @@ EndFunction
 ;   It is strongly recommended to prefix variable with the name of your mod.
 ; * default: The default value. If the variable is unset, it is initialized to this value.
 ; * readOnly: If true, the variable is never modified by DeclarativeMCM and won't be included in save/load.
+;   Controls that would otherwise manipulate a read-only variable are flagged as OPTION_FLAG_DISABLED.
 
 ; Declare a new boolean value.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
