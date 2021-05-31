@@ -64,6 +64,11 @@ EndFunction
 Function LoadExtraData(String path)
 EndFunction
 
+; Called when the game is unpaused after closing the MCM. If any generic buttons
+; are waiting to run, they will be called first.
+Function OnUnpause()
+EndFunction
+
 ; Functions to call from DeclareVariables():
 
 ; Note: Multiple calls to these functions with the same variable names are
@@ -766,6 +771,7 @@ Event OnGameReload()
 EndEvent
 
 Event OnPageReset(String page)
+	RegisterForSingleUpdate(0.01)
 	String logoPath = StorageUtil.GetStringValue(self, DeclarativeMCM_LogoPath)
 	If logoPath
 		If page
@@ -792,6 +798,7 @@ Event OnUpdate()
 		i += 1
 	EndWhile
 	StorageUtil.IntListClear(self, DeclarativeMCM_PushedButtons)
+	OnUnpause()
 EndEvent
 
 Event OnOptionSelect(Int oid)
@@ -913,7 +920,6 @@ Event OnOptionSelect(Int oid)
 		If altText
 			SetTextOptionValue(oid, altText)
 		EndIf
-		RegisterForSingleUpdate(0.01)
 	ElseIf oidType == OID_TYPE_RADIO
 		Int oldValue = StorageUtil.GetIntValue(None, variable)
 		Int size = DeclarativeMCM_GetExtraInt(index, 1)
