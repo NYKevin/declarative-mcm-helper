@@ -1,5 +1,19 @@
 Scriptname DeclarativeMCMHelper extends SKI_ConfigBase Hidden
 
+; This file is a helper for easily creating MCM menus. Usually, you should not
+; need to modify it directly. Instead, extend from it. Although it does not
+; support everything you might possibly want to do in an MCM, it should support
+; most things reasonably well, and you can always fall back on writing "regular"
+; MCM code where necessary.
+
+; If you absolutely have to modify this file, you should also change its name.
+; Otherwise, your mod might conflict with somebody else's mod.
+
+; Future versions of this file will be backwards compatible. For your
+; convenience, you can check the version number with DeclareVersion(),
+; documented below.
+Int Property DeclarativeMCM_Version = 1 autoreadonly
+
 ; Functions which you should override:
 
 ; If true, DeclareVariables() is called on every game load. If false, it is
@@ -76,6 +90,20 @@ EndFunction
 ;   It is strongly recommended to prefix variable with the name of your mod.
 ; * default: The default value. If the variable is unset, it is initialized to this value.
 ; * readOnly: If true, the variable is never modified by DeclarativeMCM and won't be included in save/load.
+
+; Declares the version of DeclarativeMCMHelper that you used to build your MCM
+; menu. If the installed version is outdated, it will show the given error
+; message and return False. On success, return True. If no error message is
+; provided, then failure is silent.
+; In most cases, the error message should inform the user that their
+; DeclarativeMCMHelper.pex file is outdated or has been overwritten.
+Bool Function DeclareVersion(Int version, String errorMessage)
+	Bool outdated = version > DeclarativeMCM_Version
+	If outdated && errorMessage
+		ShowMessage(errorMessage, False)
+	EndIf
+	Return !outdated
+EndFunction
 
 ; Declare a new boolean value.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
