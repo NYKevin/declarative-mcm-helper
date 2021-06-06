@@ -518,6 +518,19 @@ Int Function MakeLoadButton(String path, String label, String buttonText, String
 	return oid
 EndFunction
 
+; Create a text input option that will work like a save button, but the user can
+; enter a file name of their choice.
+; For loading the save again, use MiscUtil.FilesInFolder() to find all the saved
+; profiles, and then call MakeLoadButton() on each path found.
+Int Function MakeSaveAsTextBox(String directory, String label, String extraInfo, String successMessage, String failureMessage, String defaultName = "", Int flags = 0)
+	Int oid = AddInputOption(label, defaultName, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE_AS, extraInfo, flags)
+	DeclarativeMCM_PushExtraString(oidIndex, directory, true)
+	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
+	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
+	DeclarativeMCM_PushExtraString(oidIndex, defaultName, true)
+EndFunction
+
 ; Create a series of checkboxes to control the individual bits of an integer.
 ; Checkboxes are created from least to most significant, unless bigEndian is
 ; true (which will reverse the order). The variable should be an integer.
@@ -1084,10 +1097,14 @@ Event OnOptionInputOpen(Int oid)
 	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
 	If oidType == OID_TYPE_EXTERNAL
 		return
+	ElseIf oidType == OID_TYPE_TEXTBOX
+		Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
+		String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+		SetInputDialogStartText(StorageUtil.GetStringValue(None, variable))
+	ElseIf oidType == OID_TYPE_SAVE_AS
+		String defaultName = DeclarativeMCM_GetExtraString(oidIndex, 3, true)
+		SetInputDialogStartText(defaultName)
 	EndIf
-	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
-	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-	SetInputDialogStartText(StorageUtil.GetStringValue(None, variable))
 EndEvent
 
 Event OnOptionInputAccept(Int oid, String value)
@@ -1098,17 +1115,34 @@ Event OnOptionInputAccept(Int oid, String value)
 	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
 	If oidType == OID_TYPE_EXTERNAL
 		return
+	ElseIf oidType == OID_TYPE_TEXTBOX
+		Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
+		String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+		String oldValue = StorageUtil.GetStringValue(None, variable)
+		StorageUtil.SetStringValue(None, variable, value)
+		If !Validate(variable)
+			StorageUtil.SetStringValue(None, variable, oldValue)
+			return
+		EndIf
+		DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
+		SetInputOptionValue(oid, value)
+	ElseIf oidType == OID_TYPE_SAVE_AS
+		String directory = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
+		; If directory ends in a slash, we'll get a double slash. But that's OK.
+		; Windows will collapse a double slash into a single slash.
+		String path = directory + "/" + value
+		If SaveAllVariables(path)
+			String successMessage = DeclarativeMCM_GetExtraString(oidIndex, 1, true)
+			If successMessage
+				ShowMessage(successMessage, false)
+			EndIf
+		Else
+			String failureMessage = DeclarativeMCM_GetExtraString(oidIndex, 2, true)
+			If failureMessage
+				ShowMessage(failureMessage, false)
+			EndIf
+		EndIf
 	EndIf
-	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
-	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-	String oldValue = StorageUtil.GetStringValue(None, variable)
-	StorageUtil.SetStringValue(None, variable, value)
-	If !Validate(variable)
-		StorageUtil.SetStringValue(None, variable, oldValue)
-		return
-	EndIf
-	DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
-	SetInputOptionValue(oid, value)
 EndEvent
 
 Event OnOptionMenuOpen(Int oid)
@@ -1439,6 +1473,7 @@ Int Property OID_TYPE_RADIO = 12 autoreadonly
 Int Property OID_TYPE_EXTERNAL = 13 autoreadonly
 Int Property OID_TYPE_GENERIC = 14 autoreadonly
 Int Property OID_TYPE_FLIST_CHECKBOX = 15 autoreadonly
+Int Property OID_TYPE_SAVE_AS = 16 autoreadonly
 
 ; The internal variable table. Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.
