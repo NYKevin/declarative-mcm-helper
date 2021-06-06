@@ -910,7 +910,7 @@ Event OnOptionSelect(Int oid)
 			String errors = JsonUtil.GetErrors(path)
 			If LocalDevelopment() && errors
 				ShowMessage(errors, false)
-			Else
+			ElseIf LocalDevelopment()
 				ShowMessage("No JSONUtil error message available.")
 			EndIf
 		EndIf
