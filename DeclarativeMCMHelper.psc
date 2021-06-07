@@ -657,6 +657,7 @@ Int[] Function MakeRadioButtons(String variable, String[] labels, String extraIn
 	While i < labels.length
 		If labels[i]
 			Int oid = DeclarativeMCM_MakeSingleRadioButton(index, i, i == value, labels[i], extraInfo, flags)
+			StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
 		EndIf
 		i += 1
 	EndWhile
@@ -1799,7 +1800,6 @@ Int Function DeclarativeMCM_MakeSingleRadioButton(Int index, Int choice, Bool ch
 	Int oid = AddToggleOption(label, checked, flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_RADIO, extraInfo, flags)
 	DeclarativeMCM_PushExtraInt(oidIndex, choice, true)
-	StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
 	return oid
 EndFunction
 
