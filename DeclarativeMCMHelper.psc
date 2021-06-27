@@ -119,8 +119,8 @@ Function DeclareBool(String variable, Bool default = false, Bool readOnly = fals
 	EndIf
 	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_BOOL, readOnly)
 	DeclarativeMCM_PushExtraInt(index, default as Int)
-	If !readOnly && !StorageUtil.HasIntValue(None, variable)
-		StorageUtil.SetIntValue(None, variable, default as Int)
+	If !readOnly
+		InitializeInt(variable, default as Int)
 	EndIf
 EndFunction
 
@@ -132,8 +132,8 @@ Function DeclareInt(String variable, Int default = 0, Bool readOnly = false)
 	EndIf
 	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_INT, readOnly)
 	DeclarativeMCM_PushExtraInt(index, default)
-	If !readOnly && !StorageUtil.HasIntValue(None, variable)
-		StorageUtil.SetIntValue(None, variable, default)
+	If !readOnly
+		InitializeInt(variable, default)
 	EndIf
 EndFunction
 
@@ -145,8 +145,8 @@ Function DeclareFloat(String variable, Float default = 0.0, Bool readOnly = fals
 	EndIf
 	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_FLOAT, readOnly)
 	DeclarativeMCM_PushExtraFloat(index, default)
-	If !readOnly && !StorageUtil.HasFloatValue(None, variable)
-		StorageUtil.SetFloatValue(None, variable, default)
+	If !readOnly
+		InitializeFloat(variable, default)
 	EndIf
 EndFunction
 
@@ -158,8 +158,8 @@ Function DeclareString(String variable, String default = "", Bool readOnly = fal
 	EndIf
 	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_STRING, readOnly)
 	DeclarativeMCM_PushExtraString(index, default)
-	If !readOnly && !StorageUtil.HasStringValue(None, variable)
-		StorageUtil.SetStringValue(None, variable, default)
+	If !readOnly
+		InitializeString(variable, default)
 	EndIf
 EndFunction
 
@@ -182,8 +182,8 @@ Function DeclareEnum(String variable, Int size, Int default = 0, Bool readOnly =
 	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_ENUM, readOnly)
 	DeclarativeMCM_PushExtraInt(index, default)
 	DeclarativeMCM_PushExtraInt(index, size)
-	If !readOnly && !StorageUtil.HasIntValue(None, variable)
-		StorageUtil.SetIntValue(None, variable, default)
+	If !readOnly
+		InitializeInt(variable, default)
 	EndIf
 EndFunction
 
@@ -318,6 +318,33 @@ Function DeclareDependency(String left, Int verb, String right)
 	StorageUtil.IntListSet(self, DeclarativeMCM_HasDependent, rightIndex, 1)
 EndFunction
 
+; Initializes the given variable with the given value, if not already set.
+; This is "just" shorthand for the equivalent StorageUtil calls and does not
+; cause a variable to be declared.
+Function InitializeInt(String variable, Int value)
+	If !StorageUtil.HasIntValue(None, variable)
+		StorageUtil.SetIntValue(None, variable, value)
+	EndIf
+EndFunction
+
+; Same, but for float
+Function InitializeFloat(String variable, Float value)
+	If !StorageUtil.HasFloatValue(None, variable)
+		StorageUtil.SetFloatValue(None, variable, value)
+	EndIf
+EndFunction
+
+Function InitializeString(String variable, String value)
+	If !StorageUtil.HasStringValue(None, variable)
+		StorageUtil.SetStringValue(None, variable, value)
+	EndIf
+EndFunction
+
+Function InitializeForm(String variable, Form value)
+	If !StorageUtil.HasStringValue(None, variable)
+		StorageUtil.SetStringValue(None, variable, value)
+	EndIf
+EndFunction
 
 ; Functions to call from MakeUserInterface():
 ; All of these functions return an option ID, but you don't need to bother with
