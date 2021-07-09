@@ -341,8 +341,8 @@ Function InitializeString(String variable, String value)
 EndFunction
 
 Function InitializeForm(String variable, Form value)
-	If !StorageUtil.HasStringValue(None, variable)
-		StorageUtil.SetStringValue(None, variable, value)
+	If !StorageUtil.HasFormValue(None, variable)
+		StorageUtil.SetFormValue(None, variable, value)
 	EndIf
 EndFunction
 
