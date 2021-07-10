@@ -787,6 +787,7 @@ Event OnConfigInit()
 	If StorageUtil.StringListCount(self, DeclarativeMCM_PageList)
 		Pages = StorageUtil.StringListToArray(self, DeclarativeMCM_PageList)
 	EndIf
+	DeclarativeMCM_VariablesWereDeclared = True
 	DeclarativeMCM_InDeclareVariables = False
 EndEvent
 
@@ -800,6 +801,7 @@ Event OnVersionUpdate(Int version)
 	If StorageUtil.StringListCount(self, DeclarativeMCM_PageList)
 		Pages = StorageUtil.StringListToArray(self, DeclarativeMCM_PageList)
 	EndIf
+	DeclarativeMCM_VariablesWereDeclared = True
 	DeclarativeMCM_InDeclareVariables = False
 EndEvent
 
@@ -836,11 +838,25 @@ Event OnGameReload()
 		If StorageUtil.StringListCount(self, DeclarativeMCM_PageList)
 			Pages = StorageUtil.StringListToArray(self, DeclarativeMCM_PageList)
 		EndIf
+		DeclarativeMCM_VariablesWereDeclared = True
 		DeclarativeMCM_InDeclareVariables = False
 	EndIf
 EndEvent
 
 Event OnPageReset(String page)
+	If !DeclarativeMCM_VariablesWereDeclared || DeclarativeMCM_InDeclareVariables
+		SetCursorFillMode(TOP_TO_BOTTOM)
+		AddTextOption("Something is wrong.", "")
+		If LocalDevelopment()
+			AddTextOption("DeclareVariables() never returned.", "")
+			AddTextOption("Check your code for infinite loops?", "")
+			AddTextOption("Consult the Papyrus log?", "")
+		EndIf
+		AddTextOption("Make sure PapyrusUtil and SKSE are installed correctly?", "")
+		AddTextOption("Script lag? Try again in a few minutes?", "")
+		AddTextOption("Don't save. Your game may be broken.", "")
+		Return
+	EndIf
 	RegisterForSingleUpdate(0.01)
 	String logoPath = StorageUtil.GetStringValue(self, DeclarativeMCM_LogoPath)
 	If logoPath
@@ -1561,6 +1577,9 @@ String Property DeclarativeMCM_PushedButtons = "DeclarativeMCM:PushedButtons" au
 
 ; Lock to protect DeclareVariables() from being re-entered.
 Bool DeclarativeMCM_InDeclareVariables
+
+; Sanity check, in case PapyrusUtil is missing or something.
+Bool DeclarativeMCM_VariablesWereDeclared
 
 ; Add a new variable to the internal variable table. Returns the index into the
 ; table where the variable was created.
