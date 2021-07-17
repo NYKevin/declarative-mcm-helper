@@ -1,6 +1,7 @@
 Scriptname DeclarativeMCMHelper extends SKI_ConfigBase Hidden
 ;/
-The following license applies to this script file only:
+The following license applies to this script file only, and not to any other
+files you may have received alongside it:
 
 Copyright 2021 NYKevin
 
