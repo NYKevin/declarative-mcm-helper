@@ -1,13 +1,39 @@
 Scriptname DeclarativeMCMHelper extends SKI_ConfigBase Hidden
+;/
+The following license applies to this script file only:
 
-; This file is a helper for easily creating MCM menus. Usually, you should not
-; need to modify it directly. Instead, extend from it. Although it does not
-; support everything you might possibly want to do in an MCM, it should support
-; most things reasonably well, and you can always fall back on writing "regular"
-; MCM code where necessary.
+Copyright 2021 NYKevin
 
-; If you absolutely have to modify this file, you should also change its name.
-; Otherwise, your mod might conflict with somebody else's mod.
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+/;
+
+;/
+This file is a helper for easily creating MCM menus. Usually, you should not
+need to modify it directly. Instead, extend from it. Although it does not
+support everything you might possibly want to do in an MCM, it should support
+most things reasonably well, and you can always fall back on writing "regular"
+MCM code where necessary.
+
+If you absolutely have to modify this file, you should also change its name.
+Otherwise, your mod might conflict with somebody else's mod. Changing the name
+is not legally required, but it is good practice and common sense to minimize
+compatibility problems.
+/;
 
 ; Future versions of this file will be backwards compatible. For your
 ; convenience, you can check the version number with DeclareVersion(),
