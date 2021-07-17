@@ -803,6 +803,10 @@ EndFunction
 ; WARNING: If you are going to override any of these functions, you should call
 ; Parent.Function() (e.g. Parent.OnConfigInit(), Parent.OnVersionUpdate(), etc.)
 ; or else bad things may happen.
+; Note: If you want to use OnUpdate(), we always call RegisterForSingleUpdate()
+; every time the config menu is opened, to handle OnUnpause() and latent generic
+; buttons. So if you want to use the update system to time things, write a
+; separate script.
 
 Event OnConfigInit()
 	If DeclarativeMCM_InDeclareVariables
