@@ -771,11 +771,11 @@ EndFunction
 
 ; Save data to an external file as if the user had pressed a save button.
 ; Return true on success.
-Bool Function SaveAllVariables(String path)
+Bool Function SaveAllVariables(String path, Form storageKey = None)
 	Int i = 0
 	Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
 	While i < count
-		DeclarativeMCM_SaveVariable(path, i, None)
+		DeclarativeMCM_SaveVariable(path, i, storageKey)
 		i += 1
 	EndWhile
 	SaveExtraData(path)
@@ -784,14 +784,14 @@ EndFunction
 
 ; Load data from an external file as if the user had pressed a load button.
 ; Return true on success.
-Bool Function LoadAllVariables(String path)
+Bool Function LoadAllVariables(String path, Form storageKey = None)
 	If !JsonUtil.Load(path) || !JsonUtil.IsGood(path)
 		Return False
 	EndIf
 	Int i = 0
 	Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
 	While i < count
-		DeclarativeMCM_LoadVariable(path, i, None)
+		DeclarativeMCM_LoadVariable(path, i, storageKey)
 		i += 1
 	EndWhile
 	LoadExtraData(path)
