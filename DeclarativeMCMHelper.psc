@@ -548,9 +548,9 @@ EndFunction
 ; option, extraInfo is shown on hover. successMessage and failureMessage are
 ; displayed with ShowMessage() on success or failure, unless you pass an
 ; empty string, in which case no message is displayed.
-Int Function MakeSaveButton(String path, String label, String buttonText, String extraInfo, String successMessage, String failureMessage, Int flags = 0)
+Int Function MakeSaveButton(String path, String label, String buttonText, String extraInfo, String successMessage, String failureMessage, Int flags = 0, Form storageKey = None)
 	Int oid = AddTextOption(label, buttonText, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE, extraInfo, flags, None)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE, extraInfo, flags, storageKey)
 	DeclarativeMCM_PushExtraString(oidIndex, path, true)
 	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
 	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
@@ -563,9 +563,9 @@ EndFunction
 ; option, extraInfo is shown on hover. successMessage and failureMessage are
 ; displayed with ShowMessage() on success or failure, unless you pass an
 ; empty string, in which case no message is displayed.
-Int Function MakeLoadButton(String path, String label, String buttonText, String extraInfo, String successMessage, String failureMessage, Int flags = 0)
+Int Function MakeLoadButton(String path, String label, String buttonText, String extraInfo, String successMessage, String failureMessage, Int flags = 0, Form storageKey = None)
 	Int oid = AddTextOption(label, buttonText, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_LOAD, extraInfo, flags, None)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_LOAD, extraInfo, flags, storageKey)
 	DeclarativeMCM_PushExtraString(oidIndex, path, true)
 	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
 	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
@@ -576,9 +576,9 @@ EndFunction
 ; enter a file name of their choice.
 ; For loading the save again, use MiscUtil.FilesInFolder() to find all the saved
 ; profiles, and then call MakeLoadButton() on each path found.
-Int Function MakeSaveAsTextBox(String directory, String label, String extraInfo, String successMessage, String failureMessage, String defaultName = "", Int flags = 0)
+Int Function MakeSaveAsTextBox(String directory, String label, String extraInfo, String successMessage, String failureMessage, String defaultName = "", Int flags = 0, Form storageKey = None)
 	Int oid = AddInputOption(label, defaultName, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE_AS, extraInfo, flags, None)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE_AS, extraInfo, flags, storageKey)
 	DeclarativeMCM_PushExtraString(oidIndex, directory, true)
 	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
 	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
@@ -660,9 +660,9 @@ EndFunction
 ; values. If confirmationMessage is non-empty, the user will be prompted with
 ; ShowMessage(confirmationMessage) before the reset happens.
 ; Validate() will not be called.
-Int Function MakeResetButton(String label, String buttonText, String extraInfo, String confirmationMessage, Int flags = 0)
+Int Function MakeResetButton(String label, String buttonText, String extraInfo, String confirmationMessage, Int flags = 0, Form storageKey = None)
 	Int oid = AddTextOption(label, buttonText, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_RESET, extraInfo, flags, None)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_RESET, extraInfo, flags, storageKey)
 	DeclarativeMCM_PushExtraString(oidIndex, confirmationMessage, true)
 	return oid
 EndFunction
@@ -959,7 +959,7 @@ Event OnOptionSelect(Int oid)
 		SetTextOptionValue(oid, DeclarativeMCM_GetExtraString(oidIndex, value, true))
 	ElseIf oidType == OID_TYPE_SAVE
 		String path = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
-		If SaveAllVariables(path)
+		If SaveAllVariables(path, storageKey)
 			String successMessage = DeclarativeMCM_GetExtraString(oidIndex, 1, true)
 			If successMessage
 				ShowMessage(successMessage, false)
@@ -972,7 +972,7 @@ Event OnOptionSelect(Int oid)
 		EndIf
 	ElseIf oidType == OID_TYPE_LOAD
 		String path = DeclarativeMCM_GetExtraString(oidIndex, 0, true)
-		If LoadAllVariables(path)
+		If LoadAllVariables(path, storageKey)
 			String successMessage = DeclarativeMCM_GetExtraString(oidIndex, 1, true)
 			If successMessage
 				ShowMessage(successMessage, false)
@@ -1012,11 +1012,11 @@ Event OnOptionSelect(Int oid)
 			Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, i)
 			variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, i)
 			If typecode == TYPECODE_STRING
-				DeclarativeMCM_ResetStringVariable(i, variable)
+				DeclarativeMCM_ResetStringVariable(i, variable, storageKey)
 			ElseIf typecode == TYPECODE_FLOAT
-				DeclarativeMCM_ResetFloatVariable(i, variable)
+				DeclarativeMCM_ResetFloatVariable(i, variable, storageKey)
 			Else
-				DeclarativeMCM_ResetIntVariable(i, variable)
+				DeclarativeMCM_ResetIntVariable(i, variable, storageKey)
 			EndIf
 			i += 1
 		EndWhile
@@ -1439,7 +1439,7 @@ Event OnOptionDefault(Int oid)
 	; default, then fall through to the next part.
 	ElseIf typecode == TYPECODE_FLOAT
 		fOldValue = StorageUtil.GetFloatValue(storageKey, variable)
-		fDefault = DeclarativeMCM_ResetFloatVariable(index, variable)
+		fDefault = DeclarativeMCM_ResetFloatVariable(index, variable, storageKey)
 		If fOldValue == fDefault
 			return
 		EndIf
@@ -1450,7 +1450,7 @@ Event OnOptionDefault(Int oid)
 		DeclarativeMCM_ProcessTriggers(index, (fOldValue as Bool) != (fDefault as Bool))
 	ElseIf typecode == TYPECODE_STRING
 		sOldValue = StorageUtil.GetStringValue(storageKey, variable)
-		sDefault = DeclarativeMCM_ResetStringVariable(index, variable)
+		sDefault = DeclarativeMCM_ResetStringVariable(index, variable, storageKey)
 		If sOldValue == sDefault
 			return
 		EndIf
@@ -1461,7 +1461,7 @@ Event OnOptionDefault(Int oid)
 		DeclarativeMCM_ProcessTriggers(index, (sOldValue as Bool) != (sDefault as Bool))
 	Else
 		iOldValue = StorageUtil.GetIntValue(storageKey, variable)
-		iDefault = DeclarativeMCM_ResetIntVariable(index, variable)
+		iDefault = DeclarativeMCM_ResetIntVariable(index, variable, storageKey)
 		If iOldValue == iDefault
 			return
 		EndIf
@@ -1861,30 +1861,30 @@ Function DeclarativeMCM_ProcessAllTriggers()
 EndFunction
 
 ; Resets a variable to its default value, which is then returned.
-Int Function DeclarativeMCM_ResetIntVariable(Int index, String variable)
+Int Function DeclarativeMCM_ResetIntVariable(Int index, String variable, Form storageKey)
 	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
-		return StorageUtil.GetIntValue(None, variable)
+		return StorageUtil.GetIntValue(storageKey, variable)
 	EndIf
 	Int default = DeclarativeMCM_GetExtraInt(index, 0)
-	StorageUtil.SetIntValue(None, variable, default)
+	StorageUtil.SetIntValue(storageKey, variable, default)
 	return default
 EndFunction
 
-Float Function DeclarativeMCM_ResetFloatVariable(Int index, String variable)
+Float Function DeclarativeMCM_ResetFloatVariable(Int index, String variable, Form storageKey)
 	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
-		return StorageUtil.GetFloatValue(None, variable)
+		return StorageUtil.GetFloatValue(storageKey, variable)
 	EndIf
 	Float default = DeclarativeMCM_GetExtraFloat(index, 0)
-	StorageUtil.SetFloatValue(None, variable, default)
+	StorageUtil.SetFloatValue(storageKey, variable, default)
 	return default
 EndFunction
 
-String Function DeclarativeMCM_ResetStringVariable(Int index, String variable)
+String Function DeclarativeMCM_ResetStringVariable(Int index, String variable, Form storageKey)
 	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
-		return StorageUtil.GetStringValue(None, variable)
+		return StorageUtil.GetStringValue(storageKey, variable)
 	EndIf
 	String default = DeclarativeMCM_GetExtraString(index, 0)
-	StorageUtil.SetStringValue(None, variable, default)
+	StorageUtil.SetStringValue(storageKey, variable, default)
 	return default
 EndFunction
 
