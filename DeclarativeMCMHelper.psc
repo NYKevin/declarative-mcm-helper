@@ -140,24 +140,24 @@ EndFunction
 
 ; Declare a new boolean value.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
-Function DeclareBool(String variable, Bool default = false, Bool readOnly = false)
+Function DeclareBool(String variable, Bool default = false, Bool readOnly = false, Bool perObject = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_BOOL)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_BOOL, readOnly)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_BOOL, readOnly, perObject)
 	DeclarativeMCM_PushExtraInt(index, default as Int)
-	If !readOnly
+	If !readOnly && !perObject
 		InitializeInt(variable, default as Int)
 	EndIf
 EndFunction
 
 ; Declare a new integer.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
-Function DeclareInt(String variable, Int default = 0, Bool readOnly = false)
+Function DeclareInt(String variable, Int default = 0, Bool readOnly = false, Bool perObject = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_INT)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_INT, readOnly)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_INT, readOnly, perObject)
 	DeclarativeMCM_PushExtraInt(index, default)
 	If !readOnly
 		InitializeInt(variable, default)
@@ -166,26 +166,26 @@ EndFunction
 
 ; Declare a new floating-point value.
 ; It can later be accessed with StorageUtil.GetFloatValue(None, variable).
-Function DeclareFloat(String variable, Float default = 0.0, Bool readOnly = false)
+Function DeclareFloat(String variable, Float default = 0.0, Bool readOnly = false, Bool perObject = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_FLOAT)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_FLOAT, readOnly)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_FLOAT, readOnly, perObject)
 	DeclarativeMCM_PushExtraFloat(index, default)
-	If !readOnly
+	If !readOnly && !perObject
 		InitializeFloat(variable, default)
 	EndIf
 EndFunction
 
 ; Declare a new string.
 ; It can later be accessed with StorageUtil.GetStringValue(None, variable).
-Function DeclareString(String variable, String default = "", Bool readOnly = false)
+Function DeclareString(String variable, String default = "", Bool readOnly = false, Bool perObject = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_STRING)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_STRING, readOnly)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_STRING, readOnly, perObject)
 	DeclarativeMCM_PushExtraString(index, default)
-	If !readOnly
+	If !readOnly && !perObject
 		InitializeString(variable, default)
 	EndIf
 EndFunction
@@ -194,7 +194,7 @@ EndFunction
 ; It's an integer which can take on a value from zero (inclusive) to size
 ; (exclusive). Used for drop-down options and that sort of thing.
 ; It can later be accessed with StorageUtil.GetIntValue(None, variable).
-Function DeclareEnum(String variable, Int size, Int default = 0, Bool readOnly = false)
+Function DeclareEnum(String variable, Int size, Int default = 0, Bool readOnly = false, Bool perObject = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_ENUM)
 		return
 	EndIf
@@ -206,10 +206,10 @@ Function DeclareEnum(String variable, Int size, Int default = 0, Bool readOnly =
 		DeclarativeMCM_WarnBadEnumDefault(variable)
 		default = 0
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_ENUM, readOnly)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_ENUM, readOnly, perObject)
 	DeclarativeMCM_PushExtraInt(index, default)
 	DeclarativeMCM_PushExtraInt(index, size)
-	If !readOnly
+	If !readOnly && !perObject
 		InitializeInt(variable, default)
 	EndIf
 EndFunction
@@ -224,7 +224,7 @@ Function DeclareKeyCode(String variable, String nameForConflicts, Bool registerF
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_KEY)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_KEY, readOnly)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_KEY, readOnly, False)
 	DeclarativeMCM_PushExtraInt(index, default)
 	DeclarativeMCM_PushExtraInt(index, registerForKey as Int)
 	DeclarativeMCM_PushExtraString(index, nameForConflicts)
@@ -240,13 +240,13 @@ EndFunction
 ; The form list will be stored in a StorageUtil form list variable, *not* in the
 ; FormList passed as default. If default is None, then use the empty list as the
 ; default value.
-Function DeclareFormList(String variable, FormList default = None, Bool readOnly = false)
+Function DeclareFormList(String variable, FormList default = None, Bool readOnly = false, Bool perObject = false)
 	If !DeclarativeMCM_ValidateDeclaration(variable, TYPECODE_FORM_LIST)
 		return
 	EndIf
-	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_FORM_LIST, readOnly)
+	Int index = DeclarativeMCM_MakeVariable(variable, TYPECODE_FORM_LIST, readOnly, perObject)
 	DeclarativeMCM_PushExtraForm(index, default)
-	If !readOnly && default && !StorageUtil.FormListCount(None, variable)
+	If !readOnly && default && !perObject && !StorageUtil.FormListCount(None, variable)
 		StorageUtil.FormListCopy(None, variable, default.ToArray())
 	EndIf
 EndFunction
@@ -775,7 +775,7 @@ Bool Function SaveAllVariables(String path)
 	Int i = 0
 	Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
 	While i < count
-		DeclarativeMCM_SaveVariable(path, i)
+		DeclarativeMCM_SaveVariable(path, i, None)
 		i += 1
 	EndWhile
 	SaveExtraData(path)
@@ -791,7 +791,7 @@ Bool Function LoadAllVariables(String path)
 	Int i = 0
 	Int count = StorageUtil.StringListCount(self, DeclarativeMCM_VariableList)
 	While i < count
-		DeclarativeMCM_LoadVariable(path, i)
+		DeclarativeMCM_LoadVariable(path, i, None)
 		i += 1
 	EndWhile
 	LoadExtraData(path)
@@ -1568,6 +1568,8 @@ String Property DeclarativeMCM_HasDependent = "DeclarativeMCM:HasDependent" auto
 String Property DeclarativeMCM_IsSynced = "DeclarativeMCM:IsSynced" autoreadonly
 ; Truthy if this variable should be considered read-only. No initialization, no saving, no resets.
 String Property DeclarativeMCM_IsReadOnly = "DeclarativeMCM:IsReadOnly" autoreadonly
+; Truthy if this variable is set on individual objects instead of globally
+String Property DeclarativeMCM_PerObject = "DeclarativeMCM:PerObject" autoreadonly
 
 ; Other stuff that also gets set up by DeclareVariables()
 ; The list of pages that we will create.
@@ -1614,7 +1616,7 @@ Bool DeclarativeMCM_VariablesWereDeclared
 
 ; Add a new variable to the internal variable table. Returns the index into the
 ; table where the variable was created.
-Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode, Bool IsReadOnly)
+Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode, Bool IsReadOnly, Bool PerObject)
 	Int result = StorageUtil.StringListAdd(self, DeclarativeMCM_VariableList, variable)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_TypeList, typecode)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_OffsetList, -1)
@@ -1622,54 +1624,61 @@ Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode, Bool IsR
 	StorageUtil.IntListAdd(self, DeclarativeMCM_HasDependent, 0)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_IsSynced, 0)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_IsReadOnly, IsReadOnly as Int)
+	StorageUtil.IntListAdd(self, DeclarativeMCM_PerObject, PerObject as Int)
 	return result
 EndFunction
 
 ; Save a variable directly to path.
-Function DeclarativeMCM_SaveVariable(String path, Int index)
+Function DeclarativeMCM_SaveVariable(String path, Int index, Form storageKey)
 	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
+		return
+	EndIf
+	If (storageKey as Bool) != (StorageUtil.IntListGet(self, DeclarativeMCM_PerObject, index) as Bool)
 		return
 	EndIf
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	If typecode == TYPECODE_FLOAT
-		JsonUtil.SetFloatValue(path, variable, StorageUtil.GetFloatValue(None, variable))
+		JsonUtil.SetFloatValue(path, variable, StorageUtil.GetFloatValue(storageKey, variable))
 	ElseIf typecode == TYPECODE_STRING
-		JsonUtil.SetStringValue(path, variable, StorageUtil.GetStringValue(None, variable))
+		JsonUtil.SetStringValue(path, variable, StorageUtil.GetStringValue(storageKey, variable))
 	ElseIf typecode == TYPECODE_FORM_LIST
-		Form[] temp = StorageUtil.FormListToArray(None, variable)
+		Form[] temp = StorageUtil.FormListToArray(storageKey, variable)
 		JsonUtil.FormListCopy(path, variable, temp)
 	Else
-		JsonUtil.SetIntValue(path, variable, StorageUtil.GetIntValue(None, variable))
+		JsonUtil.SetIntValue(path, variable, StorageUtil.GetIntValue(storageKey, variable))
 	EndIf
 EndFunction
 
 ; Load a variable directly from path, or use its default value if JsonUtil
 ; has no value to give us.
-Function DeclarativeMCM_LoadVariable(String path, Int index)
+Function DeclarativeMCM_LoadVariable(String path, Int index, Form storageKey)
 	If StorageUtil.IntListGet(self, DeclarativeMCM_IsReadOnly, index)
+		return
+	EndIf
+	If (storageKey as Bool) != (StorageUtil.IntListGet(self, DeclarativeMCM_PerObject, index) as Bool)
 		return
 	EndIf
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	If typecode == TYPECODE_FLOAT
 		Float fDefault = DeclarativeMCM_GetExtraFloat(index, 0)
-		StorageUtil.SetFloatValue(None, variable, JsonUtil.GetFloatValue(path, variable, fDefault))
+		StorageUtil.SetFloatValue(storageKey, variable, JsonUtil.GetFloatValue(path, variable, fDefault))
 	ElseIf typecode == TYPECODE_STRING
 		String sDefault = DeclarativeMCM_GetExtraString(index, 0)
-		StorageUtil.SetStringValue(None, variable, JsonUtil.GetStringValue(path, variable, sDefault))
+		StorageUtil.SetStringValue(storageKey, variable, JsonUtil.GetStringValue(path, variable, sDefault))
 	ElseIf typecode == TYPECODE_FORM_LIST
 		Form[] value = JsonUtil.FormListToArray(path, variable)
 		FormList flDefault = DeclarativeMCM_GetExtraForm(index, 0) as FormList
 		If flDefault && (!value || value.length == 0)
 			value = flDefault.ToArray()
 		EndIf
-		StorageUtil.FormListCopy(None, variable, value)
+		StorageUtil.FormListCopy(storageKey, variable, value)
 	Else
 		Int iDefault = DeclarativeMCM_GetExtraInt(index, 0)
-		Int iOldValue = StorageUtil.GetIntValue(None, variable)
+		Int iOldValue = StorageUtil.GetIntValue(storageKey, variable)
 		Int iNewValue = JsonUtil.GetIntValue(path, variable, iDefault)
-		StorageUtil.SetIntValue(None, variable, iNewValue)
+		StorageUtil.SetIntValue(storageKey, variable, iNewValue)
 		If typecode == TYPECODE_KEY && DeclarativeMCM_GetExtraInt(index, 1)
 			If iOldValue
 				UnregisterForKey(iOldValue)
@@ -2036,6 +2045,7 @@ Function DeclarativeMCM_ClearVariables()
 	StorageUtil.IntListClear(self, DeclarativeMCM_HasDependent)
 	StorageUtil.IntListClear(self, DeclarativeMCM_IsSynced)
 	StorageUtil.IntListClear(self, DeclarativeMCM_IsReadOnly)
+	StorageUtil.IntListClear(self, DeclarativeMCM_PerObject)
 	StorageUtil.StringListClear(self, DeclarativeMCM_PageList)
 	StorageUtil.IntListClear(self, DeclarativeMCM_GlobalSyncList)
 	StorageUtil.FormListClear(self, DeclarativeMCM_GlobalSyncList)
@@ -2106,19 +2116,24 @@ Int Function DeclarativeMCM_ValidateSyncToGlobal(String variable, GlobalVariable
 		return -1
 	EndIf
 	Int index = DeclarativeMCM_ValidateVariableExists(variable)
-	If index != -1
-		Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
-		If typecode == TYPECODE_STRING || typecode == TYPECODE_FORM_LIST
-			DeclarativeMCM_WarnCantSync(variable)
-			return -1
-		ElseIf StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
-			Int syncIndex = StorageUtil.IntListFind(self, DeclarativeMCM_GlobalSyncList, index)
-			GlobalVariable originalDest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, syncIndex) as GlobalVariable
-			If originalDest != dest
-				DeclarativeMCM_WarnMultipleSync(variable)
-			EndIf
-			return -1
+	If index == -1
+		return -1
+	EndIf
+	If StorageUtil.IntListGet(self, DeclarativeMCM_PerObject, index)
+		DeclarativeMCM_WarnCantSyncPerObjectToGlobal(variable)
+		return -1
+	EndIf
+	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+	If typecode == TYPECODE_STRING || typecode == TYPECODE_FORM_LIST
+		DeclarativeMCM_WarnCantSync(variable)
+		return -1
+	ElseIf StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
+		Int syncIndex = StorageUtil.IntListFind(self, DeclarativeMCM_GlobalSyncList, index)
+		GlobalVariable originalDest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, syncIndex) as GlobalVariable
+		If originalDest != dest
+			DeclarativeMCM_WarnMultipleSync(variable)
 		EndIf
+		return -1
 	EndIf
 	return index
 EndFunction
@@ -2127,19 +2142,24 @@ EndFunction
 ; variable doesn't exist or is not a form list
 Int Function DeclarativeMCM_ValidateSyncToFormList(String variable, FormList dest)
 	Int index = DeclarativeMCM_ValidateVariableExists(variable)
-	If index != -1
-		Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
-		If typecode != TYPECODE_FORM_LIST
-			DeclarativeMCM_WarnCantSync(variable)
-			return -1
-		ElseIf StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
-			Int syncIndex = StorageUtil.IntListFind(self, DeclarativeMCM_GlobalSyncList, index)
-			FormList originalDest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, syncIndex) as FormList
-			If originalDest != dest
-				DeclarativeMCM_WarnMultipleSync(variable)
-			EndIf
-			return -1
+	If index == -1
+		return -1
+	EndIf
+	If StorageUtil.IntListGet(self, DeclarativeMCM_PerObject, index)
+		DeclarativeMCM_WarnCantSyncPerObjectToFormList(variable)
+		return -1
+	EndIf
+	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
+	If typecode != TYPECODE_FORM_LIST
+		DeclarativeMCM_WarnCantSync(variable)
+		return -1
+	ElseIf StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
+		Int syncIndex = StorageUtil.IntListFind(self, DeclarativeMCM_GlobalSyncList, index)
+		FormList originalDest = StorageUtil.FormListGet(self, DeclarativeMCM_GlobalSyncList, syncIndex) as FormList
+		If originalDest != dest
+			DeclarativeMCM_WarnMultipleSync(variable)
 		EndIf
+		return -1
 	EndIf
 	return index
 EndFunction
@@ -2246,6 +2266,18 @@ EndFunction
 Function DeclarativeMCM_WarnMultipleSync(String variable)
 	If LocalDevelopment()
 		Debug.MessageBox("Warning: Can't sync variable " + variable + " to more than one global.")
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnCantSyncPerObjectToGlobal(String variable)
+	If LocalDevelopment()
+		Debug.MessageBox("Warning: Can't sync variable " + variable + " to a global, because it's a per-object variable.")
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnCantSyncPerObjectToFormList(String variable)
+	If LocalDevelopment()
+		Debug.MessageBox("Warning: Can't sync variable " + variable + " to a FormList, because it's a per-object variable.")
 	EndIf
 EndFunction
 
