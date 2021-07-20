@@ -385,7 +385,7 @@ EndFunction
 ; Makes a checkbox for a boolean variable. label is shown inline, and
 ; extraInfo is shown on hover.
 Int Function MakeCheckbox(String variable, String label, String extraInfo, Int flags = 0, Form storageKey = None)
-	DeclareBool(variable)
+	DeclareBool(variable, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_BOOL, storageKey)
 	If index == -1
 		return -1
@@ -401,7 +401,7 @@ EndFunction
 ; stored will be equal to the number of steps above min, rather than the value
 ; the user selected.
 Int Function MakeIntSlider(String variable, String label, Int min, Int max, Int step, String extraInfo, String formatString = "{0}", Bool countSteps = false, Int flags = 0, Form storageKey = None)
-	DeclareInt(variable)
+	DeclareInt(variable, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT, storageKey)
 	If index == -1
 		return -1
@@ -427,7 +427,7 @@ EndFunction
 ; multiplier = 100.0, then the user will be selecting a percentage from 0.0 to
 ; 100.0, but the value stored will be between 0.0 and 1.0.
 Int Function MakeFloatSlider(String variable, String label, Float min, Float max, Float step, String extraInfo, String formatString = "{0}", Float multiplier = 1.0, Int flags = 0, Form storageKey = None)
-	DeclareFloat(variable)
+	DeclareFloat(variable, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_FLOAT, storageKey)
 	If index == -1
 		return -1
@@ -446,7 +446,7 @@ EndFunction
 ; Makes a text box for a string variable. label is shown inline, and
 ; extraInfo is shown on hover.
 Int Function MakeTextBox(String variable, String label, String extraInfo, Int flags = 0, Form storageKey = None)
-	DeclareString(variable)
+	DeclareString(variable, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_STRING, storageKey)
 	If index == -1
 		return -1
@@ -461,7 +461,7 @@ EndFunction
 ; each element of choices is used for the corresponding value of variable, and
 ; extraInfo is shown on hover.
 Int Function MakeDropdown(String variable, String label, String[] choices, String extraInfo, Int flags = 0, Form storageKey = None)
-	DeclareEnum(variable, choices.length)
+	DeclareEnum(variable, choices.length, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM, storageKey)
 	If index == -1
 		return -1
@@ -487,7 +487,7 @@ EndFunction
 ; Each time the user selects the option, it changes to the next choice. label is
 ; shown inline and extraInfo is shown on hover.
 Int Function MakeCycler(String variable, String label, String[] choices, String extraInfo, Int flags = 0, Form storageKey = None)
-	DeclareEnum(variable, choices.length)
+	DeclareEnum(variable, choices.length, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM, storageKey)
 	If index == -1
 		return -1
@@ -512,7 +512,7 @@ EndFunction
 ; Make a color option for an integer variable. label is shown inline, and
 ; extraInfo is shown on hover. Colors are stored as 0xRRGGBB.
 Int Function MakeColor(String variable, String label, String extraInfo, Int flags = 0, Form storageKey = None)
-	DeclareInt(variable)
+	DeclareInt(variable, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT, storageKey)
 	If index == -1
 		return -1
@@ -593,7 +593,7 @@ EndFunction
 ; extraInfo is shown when any of the checkboxes is hovered.
 ; Return None if the variable is of the wrong type.
 Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool bigEndian = false, Int flags = 0, Form storageKey = None)
-	DeclareInt(variable)
+	DeclareInt(variable, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT, storageKey)
 	If index == -1
 		return None
@@ -642,7 +642,7 @@ EndFunction
 ; bit should be a value from 0 to 31 inclusive. 0 means the least-significant
 ; bit, and 31 is the most-significant bit.
 Int Function MakeSingleBitMask(String variable, Int bit, String label, String extraInfo, Int flags = 0, Form storageKey = None)
-	DeclareInt(variable)
+	DeclareInt(variable, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT, storageKey)
 	If index == -1
 		return -1
@@ -694,7 +694,7 @@ EndFunction
 ; the user selects a checkbox, all of the other checkboxes de-select themselves.
 ; If a label is the empty string, the corresponding radio button is skipped.
 Int[] Function MakeRadioButtons(String variable, String[] labels, String extraInfo, Int flags = 0, Form storageKey = None)
-	DeclareEnum(variable, labels.length)
+	DeclareEnum(variable, labels.length, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM, storageKey)
 	If index == -1
 		return None
@@ -741,7 +741,7 @@ Int Function MakeSingleRadioButton(String variable, Int choice, String label, St
 EndFunction
 
 Int Function MakeFormListCheckbox(String variable, Form item, String label, String extraInfo, Int flags = 0, Form storageKey = None)
-	DeclareFormList(variable)
+	DeclareFormList(variable, perObject = storageKey)
 	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_FORM_LIST, storageKey, true)
 	If index == -1
 		return -1
