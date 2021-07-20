@@ -100,9 +100,9 @@ EndFunction
 ; Called when saving/loading data, so that you can save or load additional data
 ; which DeclarativeMCM is not aware of. Not needed for any variables which you
 ; declared in DeclareVariables().
-Function SaveExtraData(String path)
+Function SaveExtraData(String path, Form storageKey)
 EndFunction
-Function LoadExtraData(String path)
+Function LoadExtraData(String path, Form storageKey)
 EndFunction
 
 ; Called when the game is unpaused after closing the MCM. If any generic buttons
@@ -778,7 +778,7 @@ Bool Function SaveAllVariables(String path, Form storageKey = None)
 		DeclarativeMCM_SaveVariable(path, i, storageKey)
 		i += 1
 	EndWhile
-	SaveExtraData(path)
+	SaveExtraData(path, storageKey)
 	Return JsonUtil.Save(path, !LocalDevelopment())
 EndFunction
 
@@ -794,7 +794,7 @@ Bool Function LoadAllVariables(String path, Form storageKey = None)
 		DeclarativeMCM_LoadVariable(path, i, storageKey)
 		i += 1
 	EndWhile
-	LoadExtraData(path)
+	LoadExtraData(path, storageKey)
 	DeclarativeMCM_ProcessAllTriggers()
 	Return True
 EndFunction
