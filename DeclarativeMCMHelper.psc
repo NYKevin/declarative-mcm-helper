@@ -384,15 +384,15 @@ EndFunction
 
 ; Makes a checkbox for a boolean variable. label is shown inline, and
 ; extraInfo is shown on hover.
-Int Function MakeCheckbox(String variable, String label, String extraInfo, Int flags = 0)
+Int Function MakeCheckbox(String variable, String label, String extraInfo, Int flags = 0, Form storageKey = None)
 	DeclareBool(variable)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_BOOL)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_BOOL, storageKey)
 	If index == -1
 		return -1
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddToggleOption(label, StorageUtil.GetIntValue(None, variable), flags)
-	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CHECKBOX, extraInfo, flags)
+	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CHECKBOX, extraInfo, flags, storageKey)
 	return oid
 EndFunction
 
@@ -400,9 +400,9 @@ EndFunction
 ; extraInfo is shown on hover. If countSteps is true, then the value actually
 ; stored will be equal to the number of steps above min, rather than the value
 ; the user selected.
-Int Function MakeIntSlider(String variable, String label, Int min, Int max, Int step, String extraInfo, String formatString = "{0}", Bool countSteps = false, Int flags = 0)
+Int Function MakeIntSlider(String variable, String label, Int min, Int max, Int step, String extraInfo, String formatString = "{0}", Bool countSteps = false, Int flags = 0, Form storageKey = None)
 	DeclareInt(variable)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT, storageKey)
 	If index == -1
 		return -1
 	EndIf
@@ -412,7 +412,7 @@ Int Function MakeIntSlider(String variable, String label, Int min, Int max, Int 
 		value = min + step * value
 	EndIf
 	Int oid = AddSliderOption(label, value, formatString, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_INT_SLIDER, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_INT_SLIDER, extraInfo, flags, storageKey)
 	DeclarativeMCM_PushExtraInt(oidIndex, min, true)
 	DeclarativeMCM_PushExtraInt(oidIndex, max, true)
 	DeclarativeMCM_PushExtraInt(oidIndex, step, true)
@@ -426,15 +426,15 @@ EndFunction
 ; is multiplied by multiplier. For example, if min = 0.0, max = 100.0, and
 ; multiplier = 100.0, then the user will be selecting a percentage from 0.0 to
 ; 100.0, but the value stored will be between 0.0 and 1.0.
-Int Function MakeFloatSlider(String variable, String label, Float min, Float max, Float step, String extraInfo, String formatString = "{0}", Float multiplier = 1.0, Int flags = 0)
+Int Function MakeFloatSlider(String variable, String label, Float min, Float max, Float step, String extraInfo, String formatString = "{0}", Float multiplier = 1.0, Int flags = 0, Form storageKey = None)
 	DeclareFloat(variable)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_FLOAT)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_FLOAT, storageKey)
 	If index == -1
 		return -1
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddSliderOption(label, StorageUtil.GetFloatValue(None, variable) * multiplier, formatString, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLOAT_SLIDER, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLOAT_SLIDER, extraInfo, flags, storageKey)
 	DeclarativeMCM_PushExtraFloat(oidIndex, min, true)
 	DeclarativeMCM_PushExtraFloat(oidIndex, max, true)
 	DeclarativeMCM_PushExtraFloat(oidIndex, step, true)
@@ -445,24 +445,24 @@ EndFunction
 
 ; Makes a text box for a string variable. label is shown inline, and
 ; extraInfo is shown on hover.
-Int Function MakeTextBox(String variable, String label, String extraInfo, Int flags = 0)
+Int Function MakeTextBox(String variable, String label, String extraInfo, Int flags = 0, Form storageKey = None)
 	DeclareString(variable)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_STRING)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_STRING, storageKey)
 	If index == -1
 		return -1
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddInputOption(label, StorageUtil.GetStringValue(None, variable), flags)
-	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_TEXTBOX, extraInfo, flags)
+	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_TEXTBOX, extraInfo, flags, storageKey)
 	return oid
 EndFunction
 
 ; Make a drop-down selector for an enum variable. label is shown inline,
 ; each element of choices is used for the corresponding value of variable, and
 ; extraInfo is shown on hover.
-Int Function MakeDropdown(String variable, String label, String[] choices, String extraInfo, Int flags = 0)
+Int Function MakeDropdown(String variable, String label, String[] choices, String extraInfo, Int flags = 0, Form storageKey = None)
 	DeclareEnum(variable, choices.length)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM, storageKey)
 	If index == -1
 		return -1
 	EndIf
@@ -474,7 +474,7 @@ Int Function MakeDropdown(String variable, String label, String[] choices, Strin
 	Int value = StorageUtil.GetIntValue(None, variable)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddMenuOption(label, choices[value], flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_DROPDOWN, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_DROPDOWN, extraInfo, flags, storageKey)
 	Int i = 0
 	While i < size
 		DeclarativeMCM_PushExtraString(oidIndex, choices[i], true)
@@ -486,9 +486,9 @@ EndFunction
 ; Make a text option that cycles through choices for an enum variable.
 ; Each time the user selects the option, it changes to the next choice. label is
 ; shown inline and extraInfo is shown on hover.
-Int Function MakeCycler(String variable, String label, String[] choices, String extraInfo, Int flags = 0)
+Int Function MakeCycler(String variable, String label, String[] choices, String extraInfo, Int flags = 0, Form storageKey = None)
 	DeclareEnum(variable, choices.length)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM, storageKey)
 	If index == -1
 		return -1
 	EndIf
@@ -500,7 +500,7 @@ Int Function MakeCycler(String variable, String label, String[] choices, String 
 	Int value = StorageUtil.GetIntValue(None, variable)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddTextOption(label, choices[value], flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CYCLER, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CYCLER, extraInfo, flags, storageKey)
 	Int i = 0
 	While i < size
 		DeclarativeMCM_PushExtraString(oidIndex, choices[i], true)
@@ -511,16 +511,16 @@ EndFunction
 
 ; Make a color option for an integer variable. label is shown inline, and
 ; extraInfo is shown on hover. Colors are stored as 0xRRGGBB.
-Int Function MakeColor(String variable, String label, String extraInfo, Int flags = 0)
+Int Function MakeColor(String variable, String label, String extraInfo, Int flags = 0, Form storageKey = None)
 	DeclareInt(variable)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT, storageKey)
 	If index == -1
 		return -1
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddColorOption(label, value, flags)
-	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_COLOR, extraInfo, flags)
+	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_COLOR, extraInfo, flags, storageKey)
 	return oid
 EndFunction
 
@@ -531,14 +531,14 @@ EndFunction
 ; RegisterForKey() when the user picks a new value.
 Int Function MakeKeyMap(String variable, String label, String extraInfo, Int flags = 0)
 	DeclareKeyCode(variable, label, True)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_KEY)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_KEY, false)
 	If index == -1
 		return -1
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddKeyMapOption(label, value, flags)
-	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_KEYMAP, extraInfo, flags)
+	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_KEYMAP, extraInfo, flags, None)
 	return oid
 EndFunction
 
@@ -550,7 +550,7 @@ EndFunction
 ; empty string, in which case no message is displayed.
 Int Function MakeSaveButton(String path, String label, String buttonText, String extraInfo, String successMessage, String failureMessage, Int flags = 0)
 	Int oid = AddTextOption(label, buttonText, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE, extraInfo, flags, None)
 	DeclarativeMCM_PushExtraString(oidIndex, path, true)
 	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
 	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
@@ -565,7 +565,7 @@ EndFunction
 ; empty string, in which case no message is displayed.
 Int Function MakeLoadButton(String path, String label, String buttonText, String extraInfo, String successMessage, String failureMessage, Int flags = 0)
 	Int oid = AddTextOption(label, buttonText, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_LOAD, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_LOAD, extraInfo, flags, None)
 	DeclarativeMCM_PushExtraString(oidIndex, path, true)
 	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
 	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
@@ -578,7 +578,7 @@ EndFunction
 ; profiles, and then call MakeLoadButton() on each path found.
 Int Function MakeSaveAsTextBox(String directory, String label, String extraInfo, String successMessage, String failureMessage, String defaultName = "", Int flags = 0)
 	Int oid = AddInputOption(label, defaultName, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE_AS, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_SAVE_AS, extraInfo, flags, None)
 	DeclarativeMCM_PushExtraString(oidIndex, directory, true)
 	DeclarativeMCM_PushExtraString(oidIndex, successMessage, true)
 	DeclarativeMCM_PushExtraString(oidIndex, failureMessage, true)
@@ -592,9 +592,9 @@ EndFunction
 ; checkbox is skipped. If there are more than 32 labels, the extras are ignored.
 ; extraInfo is shown when any of the checkboxes is hovered.
 ; Return None if the variable is of the wrong type.
-Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool bigEndian = false, Int flags = 0)
+Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool bigEndian = false, Int flags = 0, Form storageKey = None)
 	DeclareInt(variable)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT, storageKey)
 	If index == -1
 		return None
 	EndIf
@@ -614,7 +614,7 @@ Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool
 	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
 	While i < 32
 		If labels[i]
-			Int oid = DeclarativeMCM_MakeSingleBitMask(index, mask, value, labels[i], extraInfo, flags)
+			Int oid = DeclarativeMCM_MakeSingleBitMask(index, mask, value, labels[i], extraInfo, flags, storageKey)
 			StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
 		EndIf
 		i += 1
@@ -641,9 +641,9 @@ EndFunction
 ; Create a single checkbox to control an individual bit of an integer.
 ; bit should be a value from 0 to 31 inclusive. 0 means the least-significant
 ; bit, and 31 is the most-significant bit.
-Int Function MakeSingleBitMask(String variable, Int bit, String label, String extraInfo, Int flags = 0)
+Int Function MakeSingleBitMask(String variable, Int bit, String label, String extraInfo, Int flags = 0, Form storageKey = None)
 	DeclareInt(variable)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_INT, storageKey)
 	If index == -1
 		return -1
 	EndIf
@@ -653,7 +653,7 @@ Int Function MakeSingleBitMask(String variable, Int bit, String label, String ex
 	Int value = StorageUtil.GetIntValue(None, variable)
 	Int mask = Math.LeftShift(1, bit)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
-	return DeclarativeMCM_MakeSingleBitMask(index, mask, value, label, extraInfo, flags)
+	return DeclarativeMCM_MakeSingleBitMask(index, mask, value, label, extraInfo, flags, storageKey)
 EndFunction
 
 ; Create a text option that, when clicked, resets all variables to their default
@@ -662,7 +662,7 @@ EndFunction
 ; Validate() will not be called.
 Int Function MakeResetButton(String label, String buttonText, String extraInfo, String confirmationMessage, Int flags = 0)
 	Int oid = AddTextOption(label, buttonText, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_RESET, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_RESET, extraInfo, flags, None)
 	DeclarativeMCM_PushExtraString(oidIndex, confirmationMessage, true)
 	return oid
 EndFunction
@@ -682,7 +682,7 @@ Int Function MakeGenericButton(Int buttonId, String label, String buttonText, St
 		EndIf
 	EndIf
 	Int oid = AddTextOption(label, buttonText, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_GENERIC, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_GENERIC, extraInfo, flags, None)
 	DeclarativeMCM_PushExtraInt(oidIndex, buttonId, true)
 	DeclarativeMCM_PushExtraInt(oidIndex, latent as Int, true)
 	DeclarativeMCM_PushExtraString(oidIndex, altText, true)
@@ -693,9 +693,9 @@ EndFunction
 ; corresonds to one possible value of variable (which should be an enum). When
 ; the user selects a checkbox, all of the other checkboxes de-select themselves.
 ; If a label is the empty string, the corresponding radio button is skipped.
-Int[] Function MakeRadioButtons(String variable, String[] labels, String extraInfo, Int flags = 0)
+Int[] Function MakeRadioButtons(String variable, String[] labels, String extraInfo, Int flags = 0, Form storageKey = None)
 	DeclareEnum(variable, labels.length)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM, storageKey)
 	If index == -1
 		return None
 	EndIf
@@ -710,7 +710,7 @@ Int[] Function MakeRadioButtons(String variable, String[] labels, String extraIn
 	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
 	While i < labels.length
 		If labels[i]
-			Int oid = DeclarativeMCM_MakeSingleRadioButton(index, i, i == value, labels[i], extraInfo, flags)
+			Int oid = DeclarativeMCM_MakeSingleRadioButton(index, i, i == value, labels[i], extraInfo, flags, storageKey)
 			StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
 		EndIf
 		i += 1
@@ -722,8 +722,8 @@ EndFunction
 
 ; Create a single radio button checkbox. choice is the value it will set when it
 ; is checked.
-Int Function MakeSingleRadioButton(String variable, Int choice, String label, String extraInfo, Int flags = 0)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM, true)
+Int Function MakeSingleRadioButton(String variable, Int choice, String label, String extraInfo, Int flags = 0, Form storageKey = None)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_ENUM, storageKey, true)
 	If index == -1
 		return -1
 	EndIf
@@ -737,19 +737,19 @@ Int Function MakeSingleRadioButton(String variable, Int choice, String label, St
 	EndIf
 	Int value = StorageUtil.GetIntValue(None, variable)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
-	return DeclarativeMCM_MakeSingleRadioButton(index, choice, choice == value, label, extraInfo, flags)
+	return DeclarativeMCM_MakeSingleRadioButton(index, choice, choice == value, label, extraInfo, flags, storageKey)
 EndFunction
 
-Int Function MakeFormListCheckbox(String variable, Form item, String label, String extraInfo, Int flags = 0)
+Int Function MakeFormListCheckbox(String variable, Form item, String label, String extraInfo, Int flags = 0, Form storageKey = None)
 	DeclareFormList(variable)
-	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_FORM_LIST, true)
+	Int index = DeclarativeMCM_ValidateUI(variable, TYPECODE_FORM_LIST, storageKey, true)
 	If index == -1
 		return -1
 	EndIf
 	Bool checked = StorageUtil.FormListHas(None, variable, item)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddToggleOption(label, checked, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLIST_CHECKBOX, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLIST_CHECKBOX, extraInfo, flags, storageKey)
 	DeclarativeMCM_PushExtraForm(oidIndex, item, true)
 	return oid
 EndFunction
@@ -759,7 +759,7 @@ EndFunction
 Function SetHoverText(Int oid, String extraInfo)
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex == -1
-		DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_EXTERNAL, extraInfo, 0)
+		DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_EXTERNAL, extraInfo, 0, None)
 		return
 	EndIf
 	StorageUtil.StringListSet(self, DeclarativeMCM_OIDInfos, oidIndex, extraInfo)
@@ -932,26 +932,27 @@ Event OnOptionSelect(Int oid)
 	If index != -1
 		variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	EndIf
+	Form storageKey = StorageUtil.FormListGet(self, DeclarativeMCM_OIDStorageKey, oidIndex)
 	If oidType == OID_TYPE_CHECKBOX
-		Bool value = StorageUtil.GetIntValue(None, variable)
+		Bool value = StorageUtil.GetIntValue(storageKey, variable)
 		value = !value
-		StorageUtil.SetIntValue(None, variable, value as Int)
+		StorageUtil.SetIntValue(storageKey, variable, value as Int)
 		If !Validate(variable)
-			StorageUtil.SetIntValue(None, variable, (!value) as Int)
+			StorageUtil.SetIntValue(storageKey, variable, (!value) as Int)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, true)
 		SetToggleOptionValue(oid, value)
 	ElseIf oidType == OID_TYPE_CYCLER
-		Int value = StorageUtil.GetIntValue(None, variable)
+		Int value = StorageUtil.GetIntValue(storageKey, variable)
 		Int size = DeclarativeMCM_GetExtraInt(index, 1)
 		value += 1
 		value %= size
-		StorageUtil.SetIntValue(None, variable, value)
+		StorageUtil.SetIntValue(storageKey, variable, value)
 		If !Validate(variable)
 			value += size - 1
 			value %= size
-			StorageUtil.SetIntValue(None, variable, value)
+			StorageUtil.SetIntValue(storageKey, variable, value)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, value == 0 || value == 1)
@@ -990,12 +991,12 @@ Event OnOptionSelect(Int oid)
 			EndIf
 		EndIf
 	ElseIf oidType == OID_TYPE_MASK
-		Int oldValue = StorageUtil.GetIntValue(None, variable)
+		Int oldValue = StorageUtil.GetIntValue(storageKey, variable)
 		Int mask = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
 		Int value = Math.LogicalXor(oldValue, mask)
-		StorageUtil.SetIntValue(None, variable, value)
+		StorageUtil.SetIntValue(storageKey, variable, value)
 		If !Validate(variable)
-			StorageUtil.SetIntValue(None, variable, oldValue)
+			StorageUtil.SetIntValue(storageKey, variable, oldValue)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
@@ -1038,15 +1039,15 @@ Event OnOptionSelect(Int oid)
 			SetTextOptionValue(oid, altText)
 		EndIf
 	ElseIf oidType == OID_TYPE_RADIO
-		Int oldValue = StorageUtil.GetIntValue(None, variable)
+		Int oldValue = StorageUtil.GetIntValue(storageKey, variable)
 		Int size = DeclarativeMCM_GetExtraInt(index, 1)
 		Int value = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
 		If value == oldValue
 			return
 		EndIf
-		StorageUtil.SetIntValue(None, variable, value)
+		StorageUtil.SetIntValue(storageKey, variable, value)
 		If !Validate(variable)
-			StorageUtil.SetIntValue(None, variable, oldValue)
+			StorageUtil.SetIntValue(storageKey, variable, oldValue)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
@@ -1062,18 +1063,18 @@ Event OnOptionSelect(Int oid)
 		EndWhile
 	ElseIf oidType == OID_TYPE_FLIST_CHECKBOX
 		Form item = DeclarativeMCM_GetExtraForm(oidIndex, 0, true)
-		Bool value = StorageUtil.FormListHas(None, variable, item)
+		Bool value = StorageUtil.FormListHas(storageKey, variable, item)
 		value = !value
 		If value
-			StorageUtil.FormListAdd(None, variable, item)
+			StorageUtil.FormListAdd(storageKey, variable, item)
 			If !Validate(variable)
-				StorageUtil.FormListRemove(None, variable, item)
+				StorageUtil.FormListRemove(storageKey, variable, item)
 				return
 			EndIf
 		Else
-			StorageUtil.FormListRemove(None, variable, item)
+			StorageUtil.FormListRemove(storageKey, variable, item)
 			If !Validate(variable)
-				StorageUtil.FormListAdd(None, variable, item)
+				StorageUtil.FormListAdd(storageKey, variable, item)
 				return
 			EndIf
 		EndIf
@@ -1093,13 +1094,14 @@ Event OnOptionSliderOpen(Int oid)
 	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	Form storageKey = StorageUtil.FormListGet(self, DeclarativeMCM_OIDStorageKey, oidIndex)
 	If oidType == OID_TYPE_INT_SLIDER
 		Int default = DeclarativeMCM_GetExtraInt(index, 0)
 		Int min = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
 		Int max = DeclarativeMCM_GetExtraInt(oidIndex, 1, true)
 		Int step = DeclarativeMCM_GetExtraInt(oidIndex, 2, true)
 		Bool countSteps = DeclarativeMCM_GetExtraInt(oidIndex, 4, true)
-		Int current = StorageUtil.GetIntValue(None, variable)
+		Int current = StorageUtil.GetIntValue(storageKey, variable)
 		If countSteps
 			current = min + current * step
 		EndIf
@@ -1113,7 +1115,7 @@ Event OnOptionSliderOpen(Int oid)
 		Float fMax = DeclarativeMCM_GetExtraFloat(oidIndex, 1, true)
 		Float fStep = DeclarativeMCM_GetExtraFloat(oidIndex, 2, true)
 		Float multiplier = DeclarativeMCM_GetExtraFloat(oidIndex, 4, true)
-		Float fCurrent = StorageUtil.GetFloatValue(None, variable)
+		Float fCurrent = StorageUtil.GetFloatValue(storageKey, variable)
 		fCurrent *= multiplier
 		SetSliderDialogStartValue(fCurrent)
 		SetSliderDialogDefaultValue(fDefault)
@@ -1133,6 +1135,7 @@ Event OnOptionSliderAccept(Int oid, Float value)
 	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
+	Form storageKey = StorageUtil.FormListGet(self, DeclarativeMCM_OIDStorageKey, oidIndex)
 	If oidType == OID_TYPE_INT_SLIDER
 		Int iNewValue = value as Int
 		Bool countSteps = DeclarativeMCM_GetExtraInt(oidIndex, 4, true)
@@ -1142,20 +1145,20 @@ Event OnOptionSliderAccept(Int oid, Float value)
 			iNewValue -= min
 			iNewValue /= step
 		EndIf
-		Int oldValue = StorageUtil.GetIntValue(None, variable)
-		StorageUtil.SetIntValue(None, variable, iNewValue)
+		Int oldValue = StorageUtil.GetIntValue(storageKey, variable)
+		StorageUtil.SetIntValue(storageKey, variable, iNewValue)
 		If !validate(variable)
-			StorageUtil.SetIntValue(None, variable, oldValue)
+			StorageUtil.SetIntValue(storageKey, variable, oldValue)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (iNewValue as Bool) != (oldValue as Bool))
 	ElseIf oidType == OID_TYPE_FLOAT_SLIDER
 		Float multiplier = DeclarativeMCM_GetExtraFloat(oidIndex, 4, true)
 		Float trueValue = value / multiplier
-		Float oldValue = StorageUtil.GetFloatValue(None, variable)
-		StorageUtil.SetFloatValue(None, variable, trueValue)
+		Float oldValue = StorageUtil.GetFloatValue(storageKey, variable)
+		StorageUtil.SetFloatValue(storageKey, variable, trueValue)
 		If !validate(variable)
-			StorageUtil.SetFloatValue(None, variable, oldValue)
+			StorageUtil.SetFloatValue(storageKey, variable, oldValue)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (trueValue as Bool) != (oldValue as Bool))
@@ -1169,13 +1172,14 @@ Event OnOptionInputOpen(Int oid)
 	If oidIndex == -1
 		return
 	EndIf
+	Form storageKey = StorageUtil.FormListGet(self, DeclarativeMCM_OIDStorageKey, oidIndex)
 	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
 	If oidType == OID_TYPE_EXTERNAL
 		return
 	ElseIf oidType == OID_TYPE_TEXTBOX
 		Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 		String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-		SetInputDialogStartText(StorageUtil.GetStringValue(None, variable))
+		SetInputDialogStartText(StorageUtil.GetStringValue(storageKey, variable))
 	ElseIf oidType == OID_TYPE_SAVE_AS
 		String defaultName = DeclarativeMCM_GetExtraString(oidIndex, 3, true)
 		SetInputDialogStartText(defaultName)
@@ -1188,15 +1192,16 @@ Event OnOptionInputAccept(Int oid, String value)
 		return
 	EndIf
 	Int oidType = StorageUtil.IntListGet(self, DeclarativeMCM_OIDTypes, oidIndex)
+	Form storageKey = StorageUtil.FormListGet(self, DeclarativeMCM_OIDStorageKey, oidIndex)
 	If oidType == OID_TYPE_EXTERNAL
 		return
 	ElseIf oidType == OID_TYPE_TEXTBOX
 		Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 		String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-		String oldValue = StorageUtil.GetStringValue(None, variable)
-		StorageUtil.SetStringValue(None, variable, value)
+		String oldValue = StorageUtil.GetStringValue(storageKey, variable)
+		StorageUtil.SetStringValue(storageKey, variable, value)
 		If !Validate(variable)
-			StorageUtil.SetStringValue(None, variable, oldValue)
+			StorageUtil.SetStringValue(storageKey, variable, oldValue)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
@@ -1229,9 +1234,10 @@ Event OnOptionMenuOpen(Int oid)
 	If oidType == OID_TYPE_EXTERNAL
 		return
 	EndIf
+	Form storageKey = StorageUtil.FormListGet(self, DeclarativeMCM_OIDStorageKey, oidIndex)
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-	Int value = StorageUtil.GetIntValue(None, variable)
+	Int value = StorageUtil.GetIntValue(storageKey, variable)
 	Int default = DeclarativeMCM_GetExtraInt(index, 0)
 	Int size = DeclarativeMCM_GetExtraInt(index, 1)
 	SetMenuDialogStartIndex(value)
@@ -1256,12 +1262,13 @@ Event OnOptionMenuAccept(Int oid, Int value)
 	If oidType == OID_TYPE_EXTERNAL
 		return
 	EndIf
+	Form storageKey = StorageUtil.FormListGet(self, DeclarativeMCM_OIDStorageKey, oidIndex)
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-	Int oldValue = StorageUtil.GetIntValue(None, variable)
-	StorageUtil.SetIntValue(None, variable, value)
+	Int oldValue = StorageUtil.GetIntValue(storageKey, variable)
+	StorageUtil.SetIntValue(storageKey, variable, value)
 	If !Validate(variable)
-		StorageUtil.SetIntValue(None, variable, oldValue)
+		StorageUtil.SetIntValue(storageKey, variable, oldValue)
 		return
 	EndIf
 	DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
@@ -1278,9 +1285,10 @@ Event OnOptionColorOpen(Int oid)
 	If oidType == OID_TYPE_EXTERNAL
 		return
 	EndIf
+	Form storageKey = StorageUtil.FormListGet(self, DeclarativeMCM_OIDStorageKey, oidIndex)
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-	Int value = StorageUtil.GetIntValue(None, variable)
+	Int value = StorageUtil.GetIntValue(storageKey, variable)
 	SetColorDialogStartColor(value)
 	Int default = DeclarativeMCM_GetExtraInt(index, 0)
 	SetColorDialogDefaultColor(default)
@@ -1295,12 +1303,13 @@ Event OnOptionColorAccept(Int oid, Int value)
 	If oidType == OID_TYPE_EXTERNAL
 		return
 	EndIf
+	Form storageKey = StorageUtil.FormListGet(self, DeclarativeMCM_OIDStorageKey, oidIndex)
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
-	Int oldValue = StorageUtil.GetIntValue(None, variable)
-	StorageUtil.SetIntValue(None, variable, value)
+	Int oldValue = StorageUtil.GetIntValue(storageKey, variable)
+	StorageUtil.SetIntValue(storageKey, variable, value)
 	If !Validate(variable)
-		StorageUtil.SetIntValue(None, variable, oldValue)
+		StorageUtil.SetIntValue(storageKey, variable, oldValue)
 		return
 	EndIf
 	DeclarativeMCM_ProcessTriggers(index, (value as Bool) != (oldValue as Bool))
@@ -1316,6 +1325,7 @@ Event OnOptionKeyMapChange(Int oid, Int value, String conflictControl, String co
 	If oidType == OID_TYPE_EXTERNAL
 		return
 	EndIf
+	; No storageKey because KeyMaps are always global.
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	If (conflictControl || conflictMod) && !HandleKeyConflict(variable, conflictControl, conflictMod)
@@ -1367,6 +1377,7 @@ Event OnOptionDefault(Int oid)
 		; Save/load/reset buttons, and other controls with no variable.
 		return
 	EndIf
+	Form storageKey = StorageUtil.FormListGet(self, DeclarativeMCM_OIDStorageKey, oidIndex)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	Float fDefault
@@ -1378,16 +1389,16 @@ Event OnOptionDefault(Int oid)
 	; In *most* cases, we want to default the entire variable, but there's two
 	; exceptions to that rule. For masks, just default the one checkbox.
 	If oidType == OID_TYPE_MASK
-		iOldValue = StorageUtil.GetIntValue(None, variable)
+		iOldValue = StorageUtil.GetIntValue(storageKey, variable)
 		Int newValue = iOldValue
 		iDefault = DeclarativeMCM_GetExtraInt(index, 0)
 		Int mask = DeclarativeMCM_GetExtraInt(oidIndex, 0, true)
 		Int maskedDefault = Math.LogicalAnd(mask, iDefault)
 		newValue = Math.LogicalAnd(Math.LogicalNot(mask), newValue)
 		newValue = Math.LogicalOr(maskedDefault, newValue)
-		StorageUtil.SetIntValue(None, variable, newValue)
+		StorageUtil.SetIntValue(storageKey, variable, newValue)
 		If !Validate(variable)
-			StorageUtil.SetIntValue(None, variable, iOldValue)
+			StorageUtil.SetIntValue(storageKey, variable, iOldValue)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (newValue as Bool) != (iOldValue as Bool))
@@ -1400,21 +1411,21 @@ Event OnOptionDefault(Int oid)
 		Bool changed
 		Bool checked
 		If flDefault && flDefault.HasForm(item)
-			changed = !StorageUtil.FormListHas(None, variable, item)
+			changed = !StorageUtil.FormListHas(storageKey, variable, item)
 			If changed
-				StorageUtil.FormListAdd(None, variable, item)
+				StorageUtil.FormListAdd(storageKey, variable, item)
 				If !Validate(variable)
-					StorageUtil.FormListRemove(None, variable, item)
+					StorageUtil.FormListRemove(storageKey, variable, item)
 					return
 				EndIf
 			EndIf
 			checked = true
 		Else
-			changed = StorageUtil.FormListHas(None, variable, item)
+			changed = StorageUtil.FormListHas(storageKey, variable, item)
 			If changed
-				StorageUtil.FormListRemove(None, variable, item)
+				StorageUtil.FormListRemove(storageKey, variable, item)
 				If !Validate(variable)
-					StorageUtil.FormListAdd(None, variable, item)
+					StorageUtil.FormListAdd(storageKey, variable, item)
 					return
 				EndIf
 			EndIf
@@ -1427,35 +1438,35 @@ Event OnOptionDefault(Int oid)
 	; set the variable to the default, call Validate(), and if it accepts the
 	; default, then fall through to the next part.
 	ElseIf typecode == TYPECODE_FLOAT
-		fOldValue = StorageUtil.GetFloatValue(None, variable)
+		fOldValue = StorageUtil.GetFloatValue(storageKey, variable)
 		fDefault = DeclarativeMCM_ResetFloatVariable(index, variable)
 		If fOldValue == fDefault
 			return
 		EndIf
 		If !Validate(variable)
-			StorageUtil.SetFloatValue(None, variable, fOldValue)
+			StorageUtil.SetFloatValue(storageKey, variable, fOldValue)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (fOldValue as Bool) != (fDefault as Bool))
 	ElseIf typecode == TYPECODE_STRING
-		sOldValue = StorageUtil.GetStringValue(None, variable)
+		sOldValue = StorageUtil.GetStringValue(storageKey, variable)
 		sDefault = DeclarativeMCM_ResetStringVariable(index, variable)
 		If sOldValue == sDefault
 			return
 		EndIf
 		If !Validate(variable)
-			StorageUtil.SetStringValue(None, variable, sOldValue)
+			StorageUtil.SetStringValue(storageKey, variable, sOldValue)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (sOldValue as Bool) != (sDefault as Bool))
 	Else
-		iOldValue = StorageUtil.GetIntValue(None, variable)
+		iOldValue = StorageUtil.GetIntValue(storageKey, variable)
 		iDefault = DeclarativeMCM_ResetIntVariable(index, variable)
 		If iOldValue == iDefault
 			return
 		EndIf
 		If !Validate(variable)
-			StorageUtil.SetIntValue(None, variable, iOldValue)
+			StorageUtil.SetIntValue(storageKey, variable, iOldValue)
 			return
 		EndIf
 		DeclarativeMCM_ProcessTriggers(index, (iOldValue as Bool) != (iDefault as Bool))
@@ -1600,6 +1611,8 @@ String Property DeclarativeMCM_OIDInfos = "DeclarativeMCM:OIDInfos" autoreadonly
 String Property DeclarativeMCM_OIDFlags = "DeclarativeMCM:OIDFlags" autoreadonly
 ; Three lists of "extra data" associated with an OID.
 String Property DeclarativeMCM_OIDExtras = "DeclarativeMCM:OIDExtras" autoreadonly
+; The Form to use as the "key" for interacting with this variable. Should be None unless PerObject is set to true.
+String Property DeclarativeMCM_OIDStorageKey = "DeclarativeMCM:OIDStorageKey" autoreadonly
 ; OIDs that are the LHS of a dependency
 String Property DeclarativeMCM_OIDsWithDependencies = "DeclarativeMCM:OIDsWithDependencies" autoreadonly
 
@@ -1875,22 +1888,22 @@ String Function DeclarativeMCM_ResetStringVariable(Int index, String variable)
 	return default
 EndFunction
 
-Int Function DeclarativeMCM_MakeSingleBitMask(Int index, Int mask, Int value, String label, String extraInfo, Int flags)
+Int Function DeclarativeMCM_MakeSingleBitMask(Int index, Int mask, Int value, String label, String extraInfo, Int flags, Form storageKey)
 	Int oid = AddToggleOption(label, Math.LogicalAnd(value, mask), flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_MASK, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_MASK, extraInfo, flags, storageKey)
 	DeclarativeMCM_PushExtraInt(oidIndex, mask, true)
 	return oid
 EndFunction
 
-Int Function DeclarativeMCM_MakeSingleRadioButton(Int index, Int choice, Bool checked, String label, String extraInfo, Int flags)
+Int Function DeclarativeMCM_MakeSingleRadioButton(Int index, Int choice, Bool checked, String label, String extraInfo, Int flags, Form storageKey)
 	Int oid = AddToggleOption(label, checked, flags)
-	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_RADIO, extraInfo, flags)
+	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_RADIO, extraInfo, flags, storageKey)
 	DeclarativeMCM_PushExtraInt(oidIndex, choice, true)
 	return oid
 EndFunction
 
 ; Save an OID. Returns the index into the OID table.
-Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String info, Int flags)
+Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String info, Int flags, Form storageKey)
 	Int oidIndex = StorageUtil.IntListFind(self, DeclarativeMCM_OIDList, oid)
 	If oidIndex != -1
 		; OIDList already has the correct value.
@@ -1909,6 +1922,7 @@ Int Function DeclarativeMCM_MakeOID(Int index, Int oid, Int typecode, String inf
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDOffsets, -1)
 		StorageUtil.StringListAdd(self, DeclarativeMCM_OIDInfos, info)
 		StorageUtil.IntListAdd(self, DeclarativeMCM_OIDFlags, flags)
+		StorageUtil.FormListAdd(self, DeclarativeMCM_OIDStorageKey, storageKey)
 	EndIf
 	If StorageUtil.IntListGet(self, DeclarativeMCM_IsDependent, index)
 		StorageUtil.IntListadd(self, DeclarativeMCM_OIDsWithDependencies, oidIndex, false)
@@ -2069,6 +2083,7 @@ Function DeclarativeMCM_ClearOIDs()
 	StorageUtil.FloatListClear(self, DeclarativeMCM_OIDExtras)
 	StorageUtil.StringListClear(self, DeclarativeMCM_OIDExtras)
 	StorageUtil.FormListClear(self, DeclarativeMCM_OIDExtras)
+	StorageUtil.FormListClear(self, DeclarativeMCM_OIDStorageKey)
 	StorageUtil.IntListClear(self, DeclarativeMCM_OIDsWithDependencies)
 EndFunction
 
@@ -2093,7 +2108,7 @@ EndFunction
 
 ; Return the index into the variable table for the named variable, or -1 if the
 ; variable is of the wrong type or doesn't exist.
-Int Function DeclarativeMCM_ValidateUI(String variable, Int typecode, Bool warnUndeclared = false)
+Int Function DeclarativeMCM_ValidateUI(String variable, Int typecode, Bool perObject, Bool warnUndeclared = false)
 	Int index = DeclarativeMCM_FindVariable(variable)
 	If index == -1
 		If warnUndeclared
@@ -2103,6 +2118,14 @@ Int Function DeclarativeMCM_ValidateUI(String variable, Int typecode, Bool warnU
 	EndIf
 	If StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index) != typecode
 		; Caller already tried to declare it, so fail silently.
+		return -1
+	EndIf
+	Bool variablePerObject = StorageUtil.IntListGet(self, DeclarativeMCM_PerObject, index)
+	If  variablePerObject && !perObject
+		DeclarativeMCM_WarnMissingStorageKey(variable)
+		return -1
+	ElseIf perObject && !variablePerObject
+		DeclarativeMCM_WarnInvalidStorageKey(variable)
 		return -1
 	EndIf
 	return index
@@ -2177,6 +2200,14 @@ Bool Function DeclarativeMCM_ValidateDependency(Int leftIndex, Int verb, Int rig
 		DeclarativeMCM_WarnCircularDependency(leftIndex)
 		return false
 	EndIf
+	If StorageUtil.IntListGet(self, DeclarativeMCM_PerObject, leftIndex)
+		DeclarativeMCM_WarnNoPerObjectDependencies(leftIndex)
+		return false
+	EndIf
+	If StorageUtil.IntListGet(self, DeclarativeMCM_PerObject, rightIndex)
+		DeclarativeMCM_WarnNoPerObjectDependencies(rightIndex)
+		return false
+	EndIf
 	Int i = 0
 	Int count = StorageUtil.IntListCount(self, DeclarativeMCM_DependencyLHS)
 	While i < count
@@ -2212,6 +2243,13 @@ Function DeclarativeMCM_WarnCircularDependency(Int index)
 	If LocalDevelopment()
 		String variable = StorageUtil.GetStringValue(self, DeclarativeMCM_VariableList, index)
 		Debug.MessageBox("Warning: Variable " + variable + " cannot depend on itself.")
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnNoPerObjectDependencies(Int index)
+	If LocalDevelopment()
+		String variable = StorageUtil.GetStringValue(self, DeclarativeMCM_VariableList, index)
+		Debug.MessageBox("Warning: Variable " + variable + " is per-object, but dependencies are only supported between global variables.")
 	EndIf
 EndFunction
 
@@ -2290,6 +2328,18 @@ EndFunction
 Function DeclarativeMCM_WarnUndeclaredVariable(String variable)
 	If LocalDevelopment()
 		Debug.MessageBox("Warning: Variable not declared: " + variable)
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnMissingStorageKey(String variable)
+	If LocalDevelopment()
+		ShowMessage("Warning: You must pass a key for this per-object variable: " + variable, false)
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnInvalidStorageKey(String variable)
+	If LocalDevelopment()
+		ShowMessage("Warning: You must not pass a key for this global variable: " + variable, false)
 	EndIf
 EndFunction
 
