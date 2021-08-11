@@ -39,7 +39,22 @@ compatibility problems.
 ; Future versions of this file will be backwards compatible. For your
 ; convenience, you can check the version number with DeclareVersion(),
 ; documented below.
+; This number does not correspond to "1.0" or similar human-readable versions.
+; Instead, it is a monotonically increasing integer.
 Int Property DeclarativeMCM_Version = 1 autoreadonly
+; Release history:
+; No stable releases yet.
+
+; True if this is a stable release, false if it's a development snapshot.
+; Stable releases have even numbers, snapshots have odd numbers. There may be
+; multiple snapshots with the same version number, but there's only ever one
+; stable version with a given number. This is so that I don't have to keep
+; bumping the version number all the time.
+Bool Property DeclarativeMCM_IsStableVersion
+	Bool Function Get()
+		Return DeclarativeMCM_Version % 2 == 0
+	EndFunction
+EndProperty
 
 ; Functions which you should override:
 
