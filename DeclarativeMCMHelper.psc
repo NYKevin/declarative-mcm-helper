@@ -34,6 +34,32 @@ If you absolutely have to modify this file, you should also change its name.
 Otherwise, your mod might conflict with somebody else's mod. Changing the name
 is not legally required, but it is good practice and common sense to minimize
 compatibility problems.
+
+Some notes about backwards compatibility:
+
+It will be necessary to introduce new variables and functions from time to time.
+It is possible for the names of these things to clash with the names you choose.
+DeclarativeMCM reserves the right to use any of the following names in the
+future:
+
+* All names beginning with "DeclarativeMCM"
+* All names beginning with "Declare"
+* All names beginning with "Make"
+* All names beginning with "Typecode_"
+* All names beginning with "OID_Type_"
+
+You should not create global or local variables that match any of the above.
+
+If a name is too short or vague to be suitable as a global (e.g. "index" or
+"variable"), then DeclarativeMCM reserves the right to use that name as a local
+variable. You should not create global variables with such names.
+
+Furthermore, DeclarativeMCM reserves the right to override any MCM or vanilla
+event which it does not currently override; it is your responsibility to call
+Parent.Function() when you override any of those events or functions.
+
+I do not provide backports. If you want to use an older version, but with newer
+bugfixes, you will have to patch and maintain it yourself.
 /;
 
 ; Future versions of this file will be backwards compatible. For your
@@ -42,8 +68,10 @@ compatibility problems.
 ; This number does not correspond to "1.0" or similar human-readable versions.
 ; Instead, it is a monotonically increasing integer.
 Int Property DeclarativeMCM_Version = 1 autoreadonly
-; Release history:
-; No stable releases yet.
+;/
+Release history:
+ * No stable releases yet.
+/;
 
 ; True if this is a stable release, false if it's a development snapshot.
 ; Stable releases have even numbers, snapshots have odd numbers. There may be
