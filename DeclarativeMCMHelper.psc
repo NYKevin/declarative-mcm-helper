@@ -436,7 +436,7 @@ Int Function MakeCheckbox(String variable, String label, String extraInfo, Int f
 		return -1
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
-	Int oid = AddToggleOption(label, StorageUtil.GetIntValue(None, variable), flags)
+	Int oid = AddToggleOption(label, StorageUtil.GetIntValue(storageKey, variable), flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CHECKBOX, extraInfo, flags, storageKey)
 	return oid
 EndFunction
@@ -452,7 +452,7 @@ Int Function MakeIntSlider(String variable, String label, Int min, Int max, Int 
 		return -1
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
-	Int value = StorageUtil.GetIntValue(None, variable)
+	Int value = StorageUtil.GetIntValue(storageKey, variable)
 	If countSteps
 		value = min + step * value
 	EndIf
@@ -478,7 +478,7 @@ Int Function MakeFloatSlider(String variable, String label, Float min, Float max
 		return -1
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
-	Int oid = AddSliderOption(label, StorageUtil.GetFloatValue(None, variable) * multiplier, formatString, flags)
+	Int oid = AddSliderOption(label, StorageUtil.GetFloatValue(storageKey, variable) * multiplier, formatString, flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLOAT_SLIDER, extraInfo, flags, storageKey)
 	DeclarativeMCM_PushExtraFloat(oidIndex, min, true)
 	DeclarativeMCM_PushExtraFloat(oidIndex, max, true)
@@ -497,7 +497,7 @@ Int Function MakeTextBox(String variable, String label, String extraInfo, Int fl
 		return -1
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
-	Int oid = AddInputOption(label, StorageUtil.GetStringValue(None, variable), flags)
+	Int oid = AddInputOption(label, StorageUtil.GetStringValue(storageKey, variable), flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_TEXTBOX, extraInfo, flags, storageKey)
 	return oid
 EndFunction
@@ -516,7 +516,7 @@ Int Function MakeDropdown(String variable, String label, String[] choices, Strin
 		DeclarativeMCM_WarnEnumMismatchedSize(variable)
 		return -1
 	EndIf
-	Int value = StorageUtil.GetIntValue(None, variable)
+	Int value = StorageUtil.GetIntValue(storageKey, variable)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddMenuOption(label, choices[value], flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_DROPDOWN, extraInfo, flags, storageKey)
@@ -542,7 +542,7 @@ Int Function MakeCycler(String variable, String label, String[] choices, String 
 		DeclarativeMCM_WarnEnumMismatchedSize(variable)
 		return -1
 	EndIf
-	Int value = StorageUtil.GetIntValue(None, variable)
+	Int value = StorageUtil.GetIntValue(storageKey, variable)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddTextOption(label, choices[value], flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_CYCLER, extraInfo, flags, storageKey)
@@ -562,7 +562,7 @@ Int Function MakeColor(String variable, String label, String extraInfo, Int flag
 	If index == -1
 		return -1
 	EndIf
-	Int value = StorageUtil.GetIntValue(None, variable)
+	Int value = StorageUtil.GetIntValue(storageKey, variable)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddColorOption(label, value, flags)
 	DeclarativeMCM_MakeOID(index, oid, OID_TYPE_COLOR, extraInfo, flags, storageKey)
@@ -643,7 +643,7 @@ Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool
 	If index == -1
 		return None
 	EndIf
-	Int value = StorageUtil.GetIntValue(None, variable)
+	Int value = StorageUtil.GetIntValue(storageKey, variable)
 	Int i = 0
 	Int count = labels.length
 	If count > 32
@@ -695,7 +695,7 @@ Int Function MakeSingleBitMask(String variable, Int bit, String label, String ex
 	If bit < 0 || bit > 31
 		DeclarativeMCM_WarnMaskOverflow(variable, bit)
 	EndIf
-	Int value = StorageUtil.GetIntValue(None, variable)
+	Int value = StorageUtil.GetIntValue(storageKey, variable)
 	Int mask = Math.LeftShift(1, bit)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	return DeclarativeMCM_MakeSingleBitMask(index, mask, value, label, extraInfo, flags, storageKey)
@@ -751,7 +751,7 @@ Int[] Function MakeRadioButtons(String variable, String[] labels, String extraIn
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int i = 0
-	Int value = StorageUtil.GetIntValue(None, variable)
+	Int value = StorageUtil.GetIntValue(storageKey, variable)
 	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
 	While i < labels.length
 		If labels[i]
@@ -780,7 +780,7 @@ Int Function MakeSingleRadioButton(String variable, Int choice, String label, St
 	If size <= choice
 		DeclarativeMCM_WarnEnumTooSmall(variable, choice)
 	EndIf
-	Int value = StorageUtil.GetIntValue(None, variable)
+	Int value = StorageUtil.GetIntValue(storageKey, variable)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	return DeclarativeMCM_MakeSingleRadioButton(index, choice, choice == value, label, extraInfo, flags, storageKey)
 EndFunction
@@ -791,7 +791,7 @@ Int Function MakeFormListCheckbox(String variable, Form item, String label, Stri
 	If index == -1
 		return -1
 	EndIf
-	Bool checked = StorageUtil.FormListHas(None, variable, item)
+	Bool checked = StorageUtil.FormListHas(storageKey, variable, item)
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	Int oid = AddToggleOption(label, checked, flags)
 	Int oidIndex = DeclarativeMCM_MakeOID(index, oid, OID_TYPE_FLIST_CHECKBOX, extraInfo, flags, storageKey)
