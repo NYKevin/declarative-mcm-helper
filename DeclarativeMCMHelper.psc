@@ -854,6 +854,12 @@ EndFunction
 ; separate script.
 
 Event OnConfigInit()
+	If PapyrusUtil.GetVersion() < 33 || PapyrusUtil.GetVersion() != PapyrusUtil.GetScriptVersion()
+		Debug.MessageBox("PapyrusUtil is very outdated and/or incorrectly installed. Please check your installation. " + ModName + " may not function correctly.")
+		; If PapyrusUtil is incorrectly installed, then we can get very weird error messages when declaring variables, so just skip declarations altogether.
+		; This will cause MCM to display an error instead of the regular menu.
+		Return
+	EndIf
 	If DeclarativeMCM_InDeclareVariables
 		return
 	EndIf
@@ -902,10 +908,8 @@ EndFunction
 
 Event OnGameReload()
 	Parent.OnGameReload()
-	If LocalDevelopment()
+	If LocalDevelopment() || !DeclarativeMCM_VariablesWereDeclared
 		If DeclarativeMCM_InDeclareVariables
-			Debug.Notification("DeclarativeMCM: Can't declare any new variables right now.")
-			Debug.Notification("Try waiting a couple of seconds, saving, and loading again.")
 			return
 		EndIf
 		DeclarativeMCM_InDeclareVariables = True
@@ -924,12 +928,18 @@ Event OnPageReset(String page)
 		SetCursorFillMode(TOP_TO_BOTTOM)
 		AddTextOption("Something is wrong.", "")
 		If LocalDevelopment()
-			AddTextOption("DeclareVariables() never returned.", "")
-			AddTextOption("Check your code for infinite loops?", "")
+			If DeclarativeMCM_InDeclareVariables
+				AddTextOption("DeclareVariables() never returned.", "")
+				AddTextOption("Check your code for infinite loops?", "")
+			Else
+				AddTextOption("Either PapyrusUtil is broken,", "")
+				AddTextOption("or OnConfigInit() hasn't run yet.", "")
+			EndIf
 			AddTextOption("Consult the Papyrus log?", "")
+		Else
+			AddTextOption("Make sure PapyrusUtil and SKSE are installed correctly?", "")
+			AddTextOption("Script lag? Try again in a few minutes?", "")
 		EndIf
-		AddTextOption("Make sure PapyrusUtil and SKSE are installed correctly?", "")
-		AddTextOption("Script lag? Try again in a few minutes?", "")
 		AddTextOption("Don't save. Your game may be broken.", "")
 		Return
 	EndIf
