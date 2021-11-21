@@ -37,9 +37,13 @@ file. To do so:
 
 1. Rename this file to anything you like. I suggest [mod name]MCMHelper.psc.
 2. Change the Scriptname line to match the new name.
-3. Compile the renamed file like any other script.
-4. Include the renamed file, and the compiled pex, in your mod.
-5. Repeat the above steps whenever you want to update to a newer version.
+3. Paste the Git hash or human-readable version number below.
+4. Compile the renamed file like any other script.
+5. Include the renamed file, and the compiled pex, in your mod.
+6. Repeat the above steps whenever you want to update to a newer version.
+
+This version of DeclarativeMCMHelper is vendored from:
+<PASTE GIT HASH OR VERSION NUMBER HERE>
 
 Some notes about backwards compatibility:
 
