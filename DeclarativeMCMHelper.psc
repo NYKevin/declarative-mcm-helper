@@ -32,12 +32,20 @@ support everything you might possibly want to do in an MCM, it should support
 most things reasonably well, and you can always fall back on writing "regular"
 MCM code where necessary.
 
-If you absolutely have to modify this file, you should also change its name.
-Otherwise, your mod might conflict with somebody else's mod. Changing the name
-is not legally required, but it is good practice and common sense to minimize
-compatibility problems.
+To minimize the risk of conflicts, you are strongly encouraged to vendor this
+file. To do so:
+
+1. Rename this file to anything you like. I suggest [mod name]MCMHelper.psc.
+2. Change the Scriptname line to match the new name.
+3. Compile the renamed file like any other script.
+4. Include the renamed file, and the compiled pex, in your mod.
+5. Repeat the above steps whenever you want to update to a newer version.
 
 Some notes about backwards compatibility:
+
+If you vendor this file correctly, then compatibility is not a big deal because
+you can just keep using your old version indefinitely, or backport fixes by hand
+if desired.
 
 It will be necessary to introduce new variables and functions from time to time.
 It is possible for the names of these things to clash with the names you choose.
