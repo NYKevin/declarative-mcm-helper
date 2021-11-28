@@ -45,6 +45,8 @@ file. To do so:
 This version of DeclarativeMCMHelper is vendored from:
 <PASTE GIT HASH OR VERSION NUMBER HERE>
 
+For the original, see https://github.com/NYKevin/declarative-mcm-helper
+
 Some notes about backwards compatibility:
 
 If you vendor this file correctly, then compatibility is not a big deal because
