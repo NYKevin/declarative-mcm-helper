@@ -327,6 +327,13 @@ Function DeclareLogo(String path, Float x = 0.0, Float y = 0.0)
 	StorageUtil.SetFloatValue(self, DeclarativeMCM_LogoY, y)
 EndFunction
 
+; Declare a path to be used for autosaving the user's settings.
+; If defaultEnabled is true, autosave is on by default.
+Function DeclareAutosave(String path, Bool defaultEnabled = false)
+	StorageUtil.SetStringValue(self, DeclarativeMCM_AutosavePath, path)
+	StorageUtil.SetIntValue(self, DeclarativeMCM_AutosaveEnabled, defaultEnabled as Int)
+EndFunction
+
 ; Declare that variable (which must already be declared) should be copied into
 ; the GlobalVariable dest when the config page is closed. Also initializes dest
 ; with the current value of variable. Syncing is strictly one-way; changes to
@@ -813,6 +820,30 @@ Int Function MakeFormListCheckbox(String variable, Form item, String label, Stri
 	return oid
 EndFunction
 
+; Create a checkbox for controlling whether autosave is enabled.
+; Unlike other variables, this checkbox's backing variable is stored in JsonUtil
+; instead of StorageUtil. If the user enables autosave in one save file, this
+; carries over to all save files automatically.
+;
+; When autosave is enabled:
+; * If the user changes a varible through the UI, SaveAllVariables() is called
+;   on the path passed to DeclareAutosave().
+; * Every time the user reloads the game, LoadAllVariables() is called.
+; * The user does not need to manually save and load their settings on a new
+;   game.
+; * Carrying settings over between unrelated games might be inconvenient, so
+;   some users might want to disable this functionality.
+Int Function MakeAutosaveCheckbox(String label, String extraInfo, Int flags = 0)
+	If !StorageUtil.HasStringValue(self, DeclarativeMCM_AutosavePath)
+		DeclarativeMCM_WarnNoAutosavePath()
+		return -1
+	EndIf
+	Bool checked = IsAutosaveEnabled()
+	Int oid = AddToggleOption(label, checked, flags)
+	DeclarativeMCM_MakeOID(-1, oid, OID_TYPE_AUTOSAVE_CHECKBOX, extraInfo, flags, None)
+	return oid
+EndFunction
+
 ; Set the hover text of oid. Works even if oid was created with a regular MCM
 ; AddFooOption() function.
 Function SetHoverText(Int oid, String extraInfo)
@@ -858,6 +889,51 @@ Bool Function LoadAllVariables(String path, Form storageKey = None)
 	Return True
 EndFunction
 
+; Return true if DeclareAutosave() was called and autosaving is enabled.
+Bool Function IsAutosaveEnabled()
+	String path = StorageUtil.GetStringValue(self, DeclarativeMCM_AutosavePath)
+	If !path
+		return False
+	EndIf
+	If !JsonUtil.HasIntValue(path, DeclarativeMCM_AutosaveEnabled)
+		return StorageUtil.GetIntValue(self, DeclarativeMCM_AutosaveEnabled)
+	EndIf
+	return JsonUtil.GetIntValue(path, DeclarativeMCM_AutosaveEnabled)
+EndFunction
+
+; Enables or disables autosaving.
+; Does nothing if you never called DeclareAutosave().
+Function EnableAutosave(Bool enabled)
+	String path = StorageUtil.GetStringValue(self, DeclarativeMCM_AutosavePath)
+	If !path
+		DeclarativeMCM_WarnNoAutosavePath()
+		return
+	EndIf
+	JsonUtil.SetIntValue(path, DeclarativeMCM_AutosaveEnabled, enabled as Int)
+	JsonUtil.Save(path, !LocalDevelopment())
+	If enabled
+		ForceAutosave()
+	EndIf
+EndFunction
+
+; Force an autosave or autoload to happen immediately, but only if autosave is
+; enabled.
+Function ForceAutosave()
+	If !IsAutosaveEnabled()
+		return
+	EndIf
+	String path = StorageUtil.GetStringValue(self, DeclarativeMCM_AutosavePath)
+	SaveAllVariables(path)
+EndFunction
+
+Function ForceAutoload()
+	If !IsAutosaveEnabled()
+		return
+	EndIf
+	String path = StorageUtil.GetStringValue(self, DeclarativeMCM_AutosavePath)
+	SaveAllVariables(path)
+EndFunction
+
 ; MCM overrides:
 ; WARNING: If you are going to override any of these functions, you should call
 ; Parent.Function() (e.g. Parent.OnConfigInit(), Parent.OnVersionUpdate(), etc.)
@@ -885,6 +961,7 @@ Event OnConfigInit()
 	EndIf
 	DeclarativeMCM_VariablesWereDeclared = True
 	DeclarativeMCM_InDeclareVariables = False
+	ForceAutoload()
 EndEvent
 
 Event OnVersionUpdate(Int version)
@@ -899,6 +976,7 @@ Event OnVersionUpdate(Int version)
 	EndIf
 	DeclarativeMCM_VariablesWereDeclared = True
 	DeclarativeMCM_InDeclareVariables = False
+	ForceAutoload()
 EndEvent
 
 String Function GetCustomControl(Int value)
@@ -935,6 +1013,7 @@ Event OnGameReload()
 		DeclarativeMCM_VariablesWereDeclared = True
 		DeclarativeMCM_InDeclareVariables = False
 	EndIf
+	ForceAutoload()
 EndEvent
 
 Event OnPageReset(String page)
@@ -1148,6 +1227,12 @@ Event OnOptionSelect(Int oid)
 			EndIf
 		EndIf
 		DeclarativeMCM_ProcessFormListTriggers(index, item, value)
+		SetToggleOptionValue(oid, value)
+	ElseIf oidType == OID_TYPE_AUTOSAVE_CHECKBOX
+		Bool value = IsAutosaveEnabled()
+		value = !value
+		EnableAutosave(value)
+		; No ProcessTriggers or Validate here.
 		SetToggleOptionValue(oid, value)
 	EndIf
 EndEvent
@@ -1441,6 +1526,12 @@ Event OnOptionDefault(Int oid)
 	If oidType == OID_TYPE_EXTERNAL
 		return
 	EndIf
+	If oidType == OID_TYPE_AUTOSAVE_CHECKBOX
+		Bool newValue = StorageUtil.GetIntValue(self, DeclarativeMCM_AutosaveEnabled)
+		EnableAutosave(newValue)
+		SetToggleOptionValue(oid, newValue)
+		return
+	EndIf
 	Int index = StorageUtil.IntListGet(self, DeclarativeMCM_OIDIndices, oidIndex)
 	If index == -1
 		; Save/load/reset buttons, and other controls with no variable.
@@ -1629,6 +1720,7 @@ Int Property OID_TYPE_EXTERNAL = 13 autoreadonly
 Int Property OID_TYPE_GENERIC = 14 autoreadonly
 Int Property OID_TYPE_FLIST_CHECKBOX = 15 autoreadonly
 Int Property OID_TYPE_SAVE_AS = 16 autoreadonly
+Int Property OID_TYPE_AUTOSAVE_CHECKBOX = 17 autoreadonly
 
 ; The internal variable table. Cleared by OnVersionUpdate(), and
 ; OnGameReload() if LocalDevelopment() is true.
@@ -1664,6 +1756,9 @@ String Property DeclarativeMCM_GlobalSyncList = "DeclarativeMCM:GlobalSyncList" 
 String Property DeclarativeMCM_DependencyLHS = "DeclarativeMCM:DependencyLHS" autoreadonly
 String Property DeclarativeMCM_DependencyRHS = "DeclarativeMCM:DependencyRHS" autoreadonly
 String Property DeclarativeMCM_DependencyType = "DeclarativeMCM:DependencyType" autoreadonly
+; The autosave path
+String Property DeclarativeMCM_AutosavePath = "DeclarativeMCM:AutosavePath" autoreadonly
+String Property DeclarativeMCM_AutosaveEnabled = "DeclarativeMCM:AutosaveEnabled" autoreadonly
 
 ; The internal OID table. Cleared by OnPageReset() and OnConfigClose().
 ; The OID.
@@ -1871,6 +1966,7 @@ Function DeclarativeMCM_ProcessFormListTriggers(Int index, Form item, Bool added
 			dest.RemoveAddedForm(item)
 		EndIf
 	EndIf
+	ForceAutosave()
 	DeclarativeMCM_ProcessEnableFlags(index)
 EndFunction
 
@@ -1880,6 +1976,7 @@ Function DeclarativeMCM_ProcessTriggers(Int index, Bool statusChanged)
 	If StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
 		DeclarativeMCM_SyncVariable(index)
 	EndIf
+	ForceAutosave()
 	If !statusChanged
 		return
 	EndIf
@@ -1927,6 +2024,7 @@ Function DeclarativeMCM_ProcessAllTriggers()
 		i += 1
 	EndWhile
 	ValidateAll()
+	ForceAutosave()
 EndFunction
 
 ; Resets a variable to its default value, which is then returned.
@@ -2138,6 +2236,8 @@ Function DeclarativeMCM_ClearVariables()
 	StorageUtil.UnsetStringValue(self, DeclarativeMCM_LogoPath)
 	StorageUtil.UnsetFloatValue(self, DeclarativeMCM_LogoX)
 	StorageUtil.UnsetFloatValue(self, DeclarativeMCM_LogoY)
+	StorageUtil.UnsetStringValue(self, DeclarativeMCM_AutosavePath)
+	StorageUtil.UnsetStringValue(self, DeclarativeMCM_AutosaveEnabled)
 EndFunction
 
 ; Clear the OID table. MakeUserInterface() will re-populate the table.
@@ -2409,6 +2509,12 @@ EndFunction
 Function DeclarativeMCM_WarnInvalidStorageKey(String variable)
 	If LocalDevelopment()
 		ShowMessage("Warning: You must not pass a key for this global variable: " + variable, false)
+	EndIf
+EndFunction
+
+Function DeclarativeMCM_WarnNoAutosavePath()
+	If LocalDevelopment()
+		Debug.MessageBox("Warning: You never set a path for autosaving.")
 	EndIf
 EndFunction
 
