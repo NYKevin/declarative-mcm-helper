@@ -1867,6 +1867,14 @@ Function DeclarativeMCM_LoadVariable(String path, Int index, Form storageKey)
 	EndIf
 EndFunction
 
+Function DeclarativeMCM_AutosaveSingleVariable(Int index)
+	If !IsAutosaveEnabled()
+		return
+	EndIf
+	String path = StorageUtil.GetStringValue(self, DeclarativeMCM_AutosavePath)
+	DeclarativeMCM_SaveVariable(path, index, None)
+EndFunction
+
 Bool Function DeclarativeMCM_IsTruthy(Int index)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
@@ -1966,7 +1974,7 @@ Function DeclarativeMCM_ProcessFormListTriggers(Int index, Form item, Bool added
 			dest.RemoveAddedForm(item)
 		EndIf
 	EndIf
-	ForceAutosave()
+	DeclarativeMCM_AutosaveSingleVariable(index)
 	DeclarativeMCM_ProcessEnableFlags(index)
 EndFunction
 
@@ -1976,7 +1984,7 @@ Function DeclarativeMCM_ProcessTriggers(Int index, Bool statusChanged)
 	If StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
 		DeclarativeMCM_SyncVariable(index)
 	EndIf
-	ForceAutosave()
+	DeclarativeMCM_AutosaveSingleVariable(index)
 	If !statusChanged
 		return
 	EndIf
