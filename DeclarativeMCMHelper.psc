@@ -65,6 +65,10 @@ future:
 * All names beginning with "OID_Type_"
 
 You should not create global or local variables that match any of the above.
+Other names might be used from time to time, in order to introduce new
+public-facing APIs, but this will be rarer and in most cases, it will be
+possible for you to patch the script to remove or rename such functions or
+variables.
 
 If a name is too short or vague to be suitable as a global (e.g. "index" or
 "variable"), then DeclarativeMCM reserves the right to use that name as a local
