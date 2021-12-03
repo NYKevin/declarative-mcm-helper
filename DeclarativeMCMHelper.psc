@@ -78,6 +78,10 @@ Furthermore, DeclarativeMCM reserves the right to override any MCM or vanilla
 event which it does not currently override; it is your responsibility to call
 Parent.Function() when you override any of those events or functions.
 
+DeclarativeMCMHelper also reserves the right to set any StorageUtil variable on
+self to any value (i.e. StorageUtil.SetFooValue(self, ...)). You should not
+modify such variables.
+
 I do not provide backports. If you want to use an older version, but with newer
 bugfixes, you will have to patch and maintain it yourself.
 /;
@@ -183,6 +187,7 @@ EndFunction
 ; * variable: A string identifying this variable.
 ;   The value can be retrieved with StorageUtil.GetIntValue(None, variable) (or GetFloatValue/GetStringValue, as applicable).
 ;   It is strongly recommended to prefix variable with the name of your mod.
+;   Do not declare variables whose names begin with "DeclarativeMCM:".
 ; * default: The default value. If the variable is unset, it is initialized to this value.
 ; * readOnly: If true, the variable is never modified by DeclarativeMCM and won't be included in save/load.
 ;   Controls that would otherwise manipulate a read-only variable are flagged as OPTION_FLAG_DISABLED.
@@ -1806,6 +1811,7 @@ Int Function DeclarativeMCM_MakeVariable(String variable, Int typecode, Bool IsR
 	StorageUtil.IntListAdd(self, DeclarativeMCM_IsSynced, 0)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_IsReadOnly, IsReadOnly as Int)
 	StorageUtil.IntListAdd(self, DeclarativeMCM_PerObject, PerObject as Int)
+	StorageUtil.SetIntValue(self, variable, result)
 	return result
 EndFunction
 
@@ -2270,7 +2276,13 @@ EndFunction
 
 ; Turns a string into an index into the variable table.
 Int Function DeclarativeMCM_FindVariable(String variable)
-	return StorageUtil.StringListFind(self, DeclarativeMCM_VariableList, variable)
+	Int index = StorageUtil.GetIntValue(self, variable, -1)
+	If index != -1 && StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index) == variable
+		return index
+	EndIf
+	index = StorageUtil.StringListFind(self, DeclarativeMCM_VariableList, variable)
+	StorageUtil.SetIntValue(self, variable, index)
+	return index
 EndFunction
 
 ; Return false if a variable already exists. Displays an error if the types
