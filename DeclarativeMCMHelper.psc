@@ -940,7 +940,7 @@ Function ForceAutoload()
 		return
 	EndIf
 	String path = StorageUtil.GetStringValue(self, DeclarativeMCM_AutosavePath)
-	SaveAllVariables(path)
+	LoadAllVariables(path)
 EndFunction
 
 ; MCM overrides:
