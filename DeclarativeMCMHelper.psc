@@ -1883,6 +1883,7 @@ Function DeclarativeMCM_AutosaveSingleVariable(Int index)
 	EndIf
 	String path = StorageUtil.GetStringValue(self, DeclarativeMCM_AutosavePath)
 	DeclarativeMCM_SaveVariable(path, index, None)
+	JsonUtil.Save(path, !LocalDevelopment())
 EndFunction
 
 Bool Function DeclarativeMCM_IsTruthy(Int index)
