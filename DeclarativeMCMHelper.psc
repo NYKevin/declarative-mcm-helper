@@ -687,7 +687,7 @@ Int[] Function MakeMask(String variable, String[] labels, String extraInfo, Bool
 	EndIf
 	flags = DeclarativeMCM_AdjustFlags(index, flags)
 	StorageUtil.IntListClear(self, DeclarativeMCM_Scratch)
-	While i < 32
+	While i < count
 		If labels[i]
 			Int oid = DeclarativeMCM_MakeSingleBitMask(index, mask, value, labels[i], extraInfo, flags, storageKey)
 			StorageUtil.IntListAdd(self, DeclarativeMCM_Scratch, oid)
