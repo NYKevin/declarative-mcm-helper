@@ -347,7 +347,9 @@ EndFunction
 ; the GlobalVariable dest when the config page is closed. Also initializes dest
 ; with the current value of variable. Syncing is strictly one-way; changes to
 ; dest will not be reflected in StorageUtil.
-Function SyncToGlobal(String variable, GlobalVariable dest)
+; If isQuestData is true, also call UpdateCurrentInstanceGlobal() every time the
+; GlobalVariable is changed.
+Function SyncToGlobal(String variable, GlobalVariable dest, Bool isQuestData = false)
 	Int index = DeclarativeMCM_ValidateSyncToGlobal(variable, dest)
 	If index == -1
 		return
@@ -362,7 +364,11 @@ Function SyncToGlobal(String variable, GlobalVariable dest)
 	EndWhile
 	StorageUtil.IntListAdd(self, DeclarativeMCM_GlobalSyncList, index)
 	StorageUtil.FormListAdd(self, DeclarativeMCM_GlobalSyncList, dest)
-	StorageUtil.IntListSet(self, DeclarativeMCM_IsSynced, index, 1)
+	If isQuestData
+		StorageUtil.IntListSet(self, DeclarativeMCM_IsSynced, index, 2)
+	Else
+		StorageUtil.IntListSet(self, DeclarativeMCM_IsSynced, index, 1)
+	EndIf
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	If typecode == TYPECODE_FLOAT
 		dest.SetValue(StorageUtil.GetFloatValue(None, variable))
@@ -1745,7 +1751,10 @@ String Property DeclarativeMCM_ExtraList = "DeclarativeMCM:ExtraList" autoreadon
 String Property DeclarativeMCM_IsDependent = "DeclarativeMCM:IsDependent" autoreadonly
 ; Truthy if this variable is the RHS of a dependency
 String Property DeclarativeMCM_HasDependent = "DeclarativeMCM:HasDependent" autoreadonly
-; Truthy if this variable will be sync'd to a GlobalVariable
+; Enum:
+; 0 - not sync'd to anything.
+; 1 - Sync'd to a global or form list.
+; 2 - Sync'd to a global, and then we call UpdateCurrentInstanceGlobal() on it.
 String Property DeclarativeMCM_IsSynced = "DeclarativeMCM:IsSynced" autoreadonly
 ; Truthy if this variable should be considered read-only. No initialization, no saving, no resets.
 String Property DeclarativeMCM_IsReadOnly = "DeclarativeMCM:IsReadOnly" autoreadonly
@@ -1992,8 +2001,11 @@ EndFunction
 ; Notify syncing and dependencies that the variable has changed.
 ; statusChanged: Whether the variable changed from falsey to truthy or vice-versa.
 Function DeclarativeMCM_ProcessTriggers(Int index, Bool statusChanged)
-	If StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
-		DeclarativeMCM_SyncVariable(index)
+	Bool syncValue = StorageUtil.IntListGet(self, DeclarativeMCM_IsSynced, index)
+	If syncValue == 1
+		DeclarativeMCM_SyncVariable(index, false)
+	ElseIf syncValue == 2
+		DeclarativeMCM_SyncVariable(index, true)
 	EndIf
 	DeclarativeMCM_AutosaveSingleVariable(index)
 	If !statusChanged
@@ -2015,7 +2027,7 @@ Form Function DeclarativeMCM_GetSyncDest(Int index)
 EndFunction
 
 ; Sync variable to its owning global.
-Function DeclarativeMCM_SyncVariable(Int index)
+Function DeclarativeMCM_SyncVariable(Int index, Bool updateQuest)
 	String variable = StorageUtil.StringListGet(self, DeclarativeMCM_VariableList, index)
 	Int typecode = StorageUtil.IntListGet(self, DeclarativeMCM_TypeList, index)
 	Form dest = DeclarativeMCM_GetSyncDest(index)
@@ -2032,6 +2044,9 @@ Function DeclarativeMCM_SyncVariable(Int index)
 	Else
 		Int value = StorageUtil.GetIntValue(None, variable)
 		(dest as GlobalVariable).SetValue(value as Float)
+	EndIf
+	If updateQuest
+		UpdateCurrentInstanceGlobal(dest as GlobalVariable)
 	EndIf
 EndFunction
 
